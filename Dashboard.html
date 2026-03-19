@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dashboard — SalesBot AI</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+<style>
+:root {
+  --neon-g:#00ff88; --neon-b:#00d4ff; --neon-b2:#0099ff;
+  --bg-0:#050a0f; --bg-1:#080f17; --bg-2:#0d1825;
+  --bg-3:#111f30; --bg-4:#162840;
+  --border:rgba(0,212,255,0.1); --border-2:rgba(0,212,255,0.06);
+  --text-1:#e8f4ff; --text-2:#7a9bb5; --text-3:#3d5a73;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:var(--bg-0);color:var(--text-1);display:flex;min-height:100vh;overflow-x:hidden;}
+h1,h2,h3,h4,h5{font-family:'Syne',sans-serif;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+
+/* Sidebar */
+#sidebar{width:240px;flex-shrink:0;background:var(--bg-1);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;position:sticky;top:0;}
+.nav-logo{padding:20px 20px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;transition:all 0.2s;color:var(--text-2);margin:2px 8px;text-decoration:none;}
+.nav-item:hover{background:var(--bg-3);color:var(--text-1);}
+.nav-item.active{background:rgba(0,212,255,0.08);color:var(--neon-b);border:1px solid rgba(0,212,255,0.15);}
+.nav-section{padding:16px 16px 6px;font-size:10px;letter-spacing:2px;color:var(--text-3);font-family:'IBM Plex Mono',monospace;}
+
+/* Main */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+#topbar{height:60px;border-bottom:1px solid var(--border);background:var(--bg-1);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0;}
+#content{flex:1;overflow-y:auto;padding:24px;}
+
+/* Cards */
+.card{background:var(--bg-2);border:1px solid var(--border);border-radius:12px;padding:20px;}
+.card-sm{background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:16px;}
+.stat-card{background:var(--bg-2);border:1px solid var(--border);border-radius:12px;padding:22px;position:relative;overflow:hidden;}
+.stat-card::before{content:'';position:absolute;top:0;right:0;width:80px;height:80px;border-radius:50%;opacity:0.05;transform:translate(20px,-20px);}
+.stat-card.green::before{background:var(--neon-g);}
+.stat-card.blue::before{background:var(--neon-b);}
+.stat-card.purple::before{background:#a78bfa;}
+.stat-card.amber::before{background:#fbbf24;}
+
+/* Status badges */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;font-family:'IBM Plex Mono',monospace;}
+.badge-green{background:rgba(0,255,136,0.1);color:var(--neon-g);border:1px solid rgba(0,255,136,0.2);}
+.badge-blue{background:rgba(0,212,255,0.1);color:var(--neon-b);border:1px solid rgba(0,212,255,0.2);}
+.badge-amber{background:rgba(251,191,36,0.1);color:#fbbf24;border:1px solid rgba(251,191,36,0.2);}
+.badge-red{background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.2);}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all 0.2s;font-family:'Syne',sans-serif;}
+.btn-primary{background:linear-gradient(135deg,var(--neon-g),#00c870);color:#050a0f;}
+.btn-primary:hover{box-shadow:0 4px 20px rgba(0,255,136,0.3);transform:translateY(-1px);}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text-2);}
+.btn-outline:hover{border-color:var(--neon-b);color:var(--neon-b);}
+.btn-whatsapp{background:#25d366;color:#fff;}
+.btn-whatsapp:hover{background:#1db954;box-shadow:0 4px 16px rgba(37,211,102,0.3);}
+
+/* Tabs */
+.tab-bar{display:flex;border-bottom:1px solid var(--border);gap:2px;margin-bottom:24px;}
+.tab{padding:10px 20px;font-size:14px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:var(--text-2);transition:all 0.2s;font-family:'Syne',sans-serif;}
+.tab.active{color:var(--neon-b);border-bottom-color:var(--neon-b);}
+
+/* Table */
+.data-table{width:100%;border-collapse:collapse;font-size:13px;}
+.data-table th{padding:10px 14px;text-align:left;font-size:11px;letter-spacing:1.5px;color:var(--text-3);font-family:'IBM Plex Mono',monospace;border-bottom:1px solid var(--border);font-weight:500;}
+.data-table td{padding:14px;border-bottom:1px solid var(--border-2);vertical-align:middle;}
+.data-table tr:last-child td{border-bottom:none;}
+.data-table tr:hover td{background:rgba(0,212,255,0.02);}
+
+/* Input */
+.form-input{width:100%;background:var(--bg-1);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text-1);font-family:'Inter',sans-serif;outline:none;transition:all 0.2s;}
+.form-input:focus{border-color:var(--neon-b);box-shadow:0 0 0 3px rgba(0,212,255,0.08);}
+.form-label{font-size:12px;color:var(--text-2);margin-bottom:6px;display:block;font-weight:500;}
+.form-select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237a9bb5' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;}
+
+/* AI Sidebar Chat */
+#ai-sidebar{width:320px;flex-shrink:0;border-left:1px solid var(--border);background:var(--bg-1);display:flex;flex-direction:column;height:100vh;position:sticky;top:0;}
+.chat-msg{padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.6;max-width:90%;}
+.chat-msg.assistant{background:var(--bg-3);border:1px solid var(--border);border-radius:12px 12px 12px 3px;}
+.chat-msg.user{background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.15);border-radius:12px 12px 3px 12px;margin-left:auto;}
+
+/* Personality selector */
+.personality-opt{border:1px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;transition:all 0.2s;background:var(--bg-1);}
+.personality-opt.selected{border-color:var(--neon-g);background:rgba(0,255,136,0.05);}
+.personality-opt:hover{border-color:var(--text-2);}
+
+/* Progress bar */
+.progress{height:4px;border-radius:99px;background:var(--bg-3);overflow:hidden;}
+.progress-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--neon-b),var(--neon-g));transition:width 1s ease;}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--bg-4);border-radius:99px;}
+
+@keyframes pulse-dot{0%,100%{opacity:1;}50%{opacity:0.3;}}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--neon-g);animation:pulse-dot 1.5s ease-in-out infinite;}
+@keyframes slide-in{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.animate-in{animation:slide-in 0.3s ease forwards;}
+</style>
+</head>
+<body>
+
+<!-- ──── SIDEBAR ──────────────────────────────── -->
+<nav id="sidebar">
+  <div class="nav-logo">
+    <div style="width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--neon-g),var(--neon-b));display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+      <i data-lucide="bot" style="width:16px;height:16px;color:#050a0f;"></i>
+    </div>
+    <div>
+      <div style="font-weight:800;font-size:15px;">SalesBot<span style="color:var(--neon-g);">AI</span></div>
+      <div class="mono" style="font-size:10px;color:var(--text-3);">PRO PLAN</div>
+    </div>
+  </div>
+
+  <div style="flex:1;overflow-y:auto;padding:12px 0;">
+    <div class="nav-section">MAIN</div>
+    <a class="nav-item active" href="#" onclick="showTab('analytics')">
+      <i data-lucide="layout-dashboard" style="width:16px;height:16px;"></i> Analytics
+    </a>
+    <a class="nav-item" href="#" onclick="showTab('orders')">
+      <i data-lucide="shopping-cart" style="width:16px;height:16px;"></i> Orders & Leads
+      <span class="badge badge-green" style="margin-left:auto;padding:2px 7px;font-size:10px;" id="orderBadge">12</span>
+    </a>
+    <a class="nav-item" href="#" onclick="showTab('products')">
+      <i data-lucide="package" style="width:16px;height:16px;"></i> Products
+    </a>
+    <div class="nav-section">SETUP</div>
+    <a class="nav-item" href="#" onclick="showTab('setup')">
+      <i data-lucide="settings-2" style="width:16px;height:16px;"></i> Store Setup
+    </a>
+    <a class="nav-item" href="#" onclick="showTab('widget')">
+      <i data-lucide="code-2" style="width:16px;height:16px;"></i> Install Widget
+    </a>
+    <div class="nav-section">SYSTEM</div>
+    <a class="nav-item" href="admin.html">
+      <i data-lucide="shield" style="width:16px;height:16px;"></i> Admin Panel
+    </a>
+    <a class="nav-item" href="index.html">
+      <i data-lucide="arrow-left" style="width:16px;height:16px;"></i> Back to Site
+    </a>
+  </div>
+
+  <!-- Store info -->
+  <div style="padding:14px 16px;border-top:1px solid var(--border);">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:34px;height:34px;border-radius:8px;background:var(--bg-3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:14px;">🏪</div>
+      <div style="overflow:hidden;">
+        <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="storeNameLabel">TechVault Store</div>
+        <div style="font-size:11px;color:var(--text-3);" id="storeEmailLabel">demo@salesbot.ai</div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ──── MAIN CONTENT ─────────────────────────── -->
+<div id="main">
+  <!-- Topbar -->
+  <div id="topbar">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="live-dot"></div>
+      <span style="font-size:13px;color:var(--text-2);font-family:'IBM Plex Mono',monospace;">LIVE DASHBOARD</span>
+      <span style="font-size:12px;color:var(--text-3);" id="lastUpdated">—</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div style="font-size:13px;color:var(--text-2);">
+        <span style="margin-right:8px;">Currency:</span>
+        <select class="mono" style="background:var(--bg-2);border:1px solid var(--border);color:var(--text-1);padding:5px 10px;border-radius:6px;font-size:12px;" id="currencySelector">
+          <option value="USD">USD $</option><option value="EUR">EUR €</option><option value="GBP">GBP £</option>
+          <option value="SAR">SAR ﷼</option><option value="AED">AED</option><option value="MAD">MAD</option>
+          <option value="EGP">EGP</option><option value="NGN">NGN ₦</option>
+        </select>
+      </div>
+      <a href="chat.html?demo=1" class="btn btn-outline" style="padding:7px 14px;font-size:12px;">
+        <i data-lucide="external-link" style="width:13px;height:13px;"></i> Preview Widget
+      </a>
+    </div>
+  </div>
+
+  <!-- Tab content -->
+  <div id="content">
+
+    <!-- ━━━ ANALYTICS TAB ━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <div id="tab-analytics">
+      <div style="margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <h1 style="font-size:24px;font-weight:800;">Analytics Overview</h1>
+          <p style="color:var(--text-2);font-size:14px;margin-top:2px;">Your AI-powered store performance</p>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-outline" onclick="refreshAnalytics()"><i data-lucide="refresh-cw" style="width:14px;height:14px;"></i> Refresh</button>
+          <button class="btn btn-primary"><i data-lucide="download" style="width:14px;height:14px;"></i> Export</button>
+        </div>
+      </div>
+
+      <!-- Stat cards -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px;">
+        <div class="stat-card green">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <span style="font-size:12px;color:var(--text-2);letter-spacing:1px;font-family:'IBM Plex Mono',monospace;">AI REVENUE</span>
+            <div style="background:rgba(0,255,136,0.1);border-radius:8px;padding:6px;"><i data-lucide="trending-up" style="width:16px;height:16px;color:var(--neon-g);"></i></div>
+          </div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:32px;" id="stat-revenue">$0</div>
+          <div style="font-size:12px;color:var(--neon-g);margin-top:6px;" id="stat-revenue-change">↑ 0% this week</div>
+          <div class="progress" style="margin-top:12px;"><div class="progress-fill" id="rev-bar" style="width:0%"></div></div>
+        </div>
+        <div class="stat-card blue">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <span style="font-size:12px;color:var(--text-2);letter-spacing:1px;font-family:'IBM Plex Mono',monospace;">ACTIVE CHATS</span>
+            <div style="background:rgba(0,212,255,0.1);border-radius:8px;padding:6px;"><i data-lucide="message-square" style="width:16px;height:16px;color:var(--neon-b);"></i></div>
+          </div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:32px;" id="stat-chats">0</div>
+          <div style="font-size:12px;color:var(--neon-b);margin-top:6px;" id="stat-chats-sub">Live now</div>
+        </div>
+        <div class="stat-card purple">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <span style="font-size:12px;color:var(--text-2);letter-spacing:1px;font-family:'IBM Plex Mono',monospace;">CONVERSIONS</span>
+            <div style="background:rgba(167,139,250,0.1);border-radius:8px;padding:6px;"><i data-lucide="percent" style="width:16px;height:16px;color:#a78bfa;"></i></div>
+          </div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:32px;" id="stat-conversion">0%</div>
+          <div style="font-size:12px;color:#a78bfa;margin-top:6px;">Lead → Sale rate</div>
+        </div>
+        <div class="stat-card amber">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <span style="font-size:12px;color:var(--text-2);letter-spacing:1px;font-family:'IBM Plex Mono',monospace;">TOTAL ORDERS</span>
+            <div style="background:rgba(251,191,36,0.1);border-radius:8px;padding:6px;"><i data-lucide="package-check" style="width:16px;height:16px;color:#fbbf24;"></i></div>
+          </div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:32px;" id="stat-orders">0</div>
+          <div style="font-size:12px;color:#fbbf24;margin-top:6px;" id="stat-orders-sub">Confirmed</div>
+        </div>
+      </div>
+
+      <!-- Charts row -->
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:24px;">
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+            <h3 style="font-size:15px;font-weight:700;">AI-Generated Revenue</h3>
+            <div style="display:flex;gap:6px;">
+              <button class="btn btn-outline" style="padding:5px 12px;font-size:11px;" onclick="setChartPeriod(7)">7D</button>
+              <button class="btn btn-outline" style="padding:5px 12px;font-size:11px;" onclick="setChartPeriod(14)">14D</button>
+              <button class="btn btn-outline" style="padding:5px 12px;font-size:11px;" onclick="setChartPeriod(30)">30D</button>
+            </div>
+          </div>
+          <canvas id="revenueChart" height="180"></canvas>
+        </div>
+        <div class="card">
+          <h3 style="font-size:15px;font-weight:700;margin-bottom:20px;">Lead Status</h3>
+          <canvas id="statusChart" height="180"></canvas>
+          <div id="statusLegend" style="margin-top:16px;display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+      </div>
+
+      <!-- Recent activity -->
+      <div class="card">
+        <h3 style="font-size:15px;font-weight:700;margin-bottom:16px;">Recent Activity</h3>
+        <div id="recentActivity" style="display:flex;flex-direction:column;gap:10px;"></div>
+      </div>
+    </div>
+
+    <!-- ━━━ ORDERS TAB ━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <div id="tab-orders" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+        <div>
+          <h1 style="font-size:24px;font-weight:800;">Orders & Leads CRM</h1>
+          <p style="color:var(--text-2);font-size:14px;margin-top:2px;">AI-captured customer profiles and orders</p>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div style="position:relative;">
+            <i data-lucide="search" style="width:14px;height:14px;position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-3);"></i>
+            <input class="form-input" style="padding-left:32px;width:220px;height:36px;" placeholder="Search customer, product..." id="ordersSearch" oninput="filterOrders()"/>
+          </div>
+          <select class="form-input form-select" style="width:140px;height:36px;padding:0 32px 0 12px;" id="statusFilter" onchange="filterOrders()">
+            <option value="">All Status</option>
+            <option value="lead">Lead</option>
+            <option value="interested">Interested</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+          <button class="btn btn-primary" onclick="exportLeads()"><i data-lucide="download" style="width:14px;height:14px;"></i> Export CSV</button>
+        </div>
+      </div>
+
+      <div class="card" style="padding:0;overflow:hidden;">
+        <table class="data-table" id="ordersTable">
+          <thead>
+            <tr>
+              <th>CUSTOMER</th>
+              <th>CONTACT</th>
+              <th>PRODUCT</th>
+              <th>AMOUNT</th>
+              <th>STATUS</th>
+              <th>DATE</th>
+              <th>ACTION</th>
+            </tr>
+          </thead>
+          <tbody id="ordersBody">
+            <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-3);">Loading...</td></tr>
+          </tbody>
+        </table>
+        <div style="padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:12px;color:var(--text-2);font-family:'IBM Plex Mono',monospace;" id="ordersCount">0 records</span>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-outline" style="padding:6px 12px;" id="prevPage" onclick="changePage(-1)"><i data-lucide="chevron-left" style="width:14px;height:14px;"></i></button>
+            <span style="font-size:12px;color:var(--text-2);padding:6px 12px;" id="pageInfo">1 / 1</span>
+            <button class="btn btn-outline" style="padding:6px 12px;" id="nextPage" onclick="changePage(1)"><i data-lucide="chevron-right" style="width:14px;height:14px;"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ━━━ PRODUCTS TAB ━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <div id="tab-products" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+        <h1 style="font-size:24px;font-weight:800;">Product Catalogue</h1>
+        <button class="btn btn-primary" onclick="openProductModal()">
+          <i data-lucide="plus" style="width:14px;height:14px;"></i> Add Product
+        </button>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>PRODUCT</th><th>PRICE</th><th>STOCK</th><th>CATEGORY</th><th>STATUS</th><th>ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody id="productsBody">
+            <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-3);">No products yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- Product Modal -->
+      <div id="productModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);" onclick="closeProductModal(event)">
+        <div class="card" style="width:500px;max-width:90vw;position:relative;" onclick="event.stopPropagation()">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <h3 style="font-size:18px;font-weight:700;" id="productModalTitle">Add Product</h3>
+            <button onclick="closeProductModal()" style="background:none;border:none;cursor:pointer;color:var(--text-2);"><i data-lucide="x" style="width:20px;height:20px;"></i></button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;" id="productForm">
+            <div style="grid-column:1/-1;"><label class="form-label">Product Name *</label><input class="form-input" id="p-name" placeholder="e.g. Wireless Headset Pro"/></div>
+            <div><label class="form-label">Price *</label><input class="form-input" id="p-price" type="number" placeholder="0.00"/></div>
+            <div><label class="form-label">Stock</label><input class="form-input" id="p-stock" type="number" placeholder="0"/></div>
+            <div><label class="form-label">Category</label><input class="form-input" id="p-category" placeholder="Electronics"/></div>
+            <div><label class="form-label">SKU</label><input class="form-input" id="p-sku" placeholder="SKU-001"/></div>
+            <div style="grid-column:1/-1;"><label class="form-label">Description</label><textarea class="form-input" id="p-desc" rows="3" placeholder="Short product description for the AI..."></textarea></div>
+          </div>
+          <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
+            <button class="btn btn-outline" onclick="closeProductModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveProduct()"><i data-lucide="save" style="width:14px;height:14px;"></i> Save Product</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ━━━ SETUP TAB ━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <div id="tab-setup" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+        <div>
+          <h1 style="font-size:24px;font-weight:800;">Store AI Setup</h1>
+          <p style="color:var(--text-2);font-size:14px;margin-top:2px;">Configure your AI sales agent — no code required</p>
+        </div>
+        <button class="btn btn-primary" onclick="saveStoreSettings()"><i data-lucide="save" style="width:14px;height:14px;"></i> Save Changes</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+        <!-- Store Identity -->
+        <div class="card">
+          <h3 style="font-size:15px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;"><i data-lucide="store" style="width:16px;height:16px;color:var(--neon-b);"></i> Store Identity</h3>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div><label class="form-label">Store Name</label><input class="form-input" id="cfg-name" value="TechVault Store"/></div>
+            <div><label class="form-label">Industry</label>
+              <select class="form-input form-select" id="cfg-industry" style="padding-right:32px;">
+                <option>Electronics</option><option>Fashion</option><option>Food & Beverage</option>
+                <option>Health & Beauty</option><option>Home & Garden</option><option>Sports</option>
+                <option>General</option>
+              </select>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <div><label class="form-label">Currency</label>
+                <select class="form-input form-select" id="cfg-currency" style="padding-right:32px;">
+                  <option value="USD">USD ($)</option><option value="EUR">EUR (€)</option><option value="GBP">GBP (£)</option>
+                  <option value="SAR">SAR (﷼)</option><option value="AED">AED</option><option value="MAD">MAD</option>
+                  <option value="EGP">EGP</option><option value="NGN">NGN (₦)</option>
+                </select>
+              </div>
+              <div><label class="form-label">Language</label>
+                <select class="form-input form-select" id="cfg-language" style="padding-right:32px;">
+                  <option value="en">English</option><option value="ar">Arabic</option>
+                  <option value="fr">French</option><option value="es">Spanish</option>
+                  <option value="pt">Portuguese</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Business Rules -->
+        <div class="card">
+          <h3 style="font-size:15px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;"><i data-lucide="clipboard-list" style="width:16px;height:16px;color:var(--neon-g);"></i> Business Rules</h3>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div><label class="form-label">Delivery Time</label><input class="form-input" id="cfg-delivery" value="3–5 business days"/></div>
+            <div><label class="form-label">Return Policy</label><input class="form-input" id="cfg-return" value="30-day returns on all items"/></div>
+            <div><label class="form-label">WhatsApp Number (intl format)</label><input class="form-input" id="cfg-whatsapp" placeholder="+1234567890"/></div>
+            <div><label class="form-label">Discount Codes (comma-separated)</label><input class="form-input" id="cfg-discounts" placeholder="SAVE10, SUMMER20"/></div>
+          </div>
+        </div>
+
+        <!-- AI Personality -->
+        <div class="card" style="grid-column:1/-1;">
+          <h3 style="font-size:15px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;"><i data-lucide="cpu" style="width:16px;height:16px;color:#a78bfa;"></i> AI Personality</h3>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;" id="personalityGrid">
+            <div class="personality-opt selected" onclick="selectPersonality('professional')">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                <i data-lucide="briefcase" style="width:20px;height:20px;color:var(--neon-b);"></i>
+                <span style="font-weight:700;">Professional</span>
+              </div>
+              <p style="font-size:12px;color:var(--text-2);">Formal, precise, trust-building. Perfect for B2B and premium products.</p>
+            </div>
+            <div class="personality-opt" onclick="selectPersonality('friendly')">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                <i data-lucide="smile" style="width:20px;height:20px;color:var(--neon-g);"></i>
+                <span style="font-weight:700;">Friendly</span>
+              </div>
+              <p style="font-size:12px;color:var(--text-2);">Warm and conversational. Great for lifestyle, fashion, and general stores.</p>
+            </div>
+            <div class="personality-opt" onclick="selectPersonality('aggressive')">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                <i data-lucide="zap" style="width:20px;height:20px;color:#fbbf24;"></i>
+                <span style="font-weight:700;">Aggressive Seller</span>
+              </div>
+              <p style="font-size:12px;color:var(--text-2);">Urgency-driven closer. Best for flash sales, promotions, and high-volume stores.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Custom Rules -->
+        <div class="card" style="grid-column:1/-1;">
+          <h3 style="font-size:15px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;"><i data-lucide="file-text" style="width:16px;height:16px;color:var(--text-2);"></i> Custom AI Instructions</h3>
+          <textarea class="form-input" id="cfg-custom" rows="4" placeholder="e.g. 'Always mention our 2-year warranty. Never discuss competitors. If customer asks about bulk pricing, offer 15% off for 10+ units.'"></textarea>
+          <p style="font-size:12px;color:var(--text-3);margin-top:6px;">These instructions are injected into the AI's system prompt verbatim.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ━━━ WIDGET TAB ━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <div id="tab-widget" style="display:none;">
+      <h1 style="font-size:24px;font-weight:800;margin-bottom:8px;">Install Widget</h1>
+      <p style="color:var(--text-2);font-size:14px;margin-bottom:24px;">One script tag. Works on any website.</p>
+      <div class="card" style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <h3 style="font-size:15px;font-weight:700;">Your Embed Code</h3>
+          <button class="btn btn-outline" onclick="copyEmbed()"><i data-lucide="copy" style="width:14px;height:14px;"></i> Copy</button>
+        </div>
+        <div style="background:var(--bg-0);border:1px solid var(--border);border-radius:8px;padding:16px;overflow-x:auto;">
+          <code class="mono" style="font-size:13px;color:var(--neon-g);" id="embedCode">
+&lt;!-- SalesBot AI Widget --&gt;<br/>
+&lt;script <br/>
+&nbsp;&nbsp;src="https://cdn.salesbot.ai/widget/v2/chat.js"<br/>
+&nbsp;&nbsp;data-store="DEMO_STORE_001"<br/>
+&nbsp;&nbsp;data-theme="dark"<br/>
+&nbsp;&nbsp;data-lang="auto"<br/>
+&gt;&lt;/script&gt;
+          </code>
+        </div>
+      </div>
+      <div class="card">
+        <h3 style="font-size:15px;font-weight:700;margin-bottom:14px;">Platform Guides</h3>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;">
+          <div class="card-sm" style="display:flex;align-items:center;gap:10px;">
+            <i data-lucide="shopping-bag" style="width:18px;height:18px;color:#96bf48;"></i>
+            <span style="font-size:13px;font-weight:600;">Shopify</span>
+          </div>
+          <div class="card-sm" style="display:flex;align-items:center;gap:10px;">
+            <i data-lucide="package" style="width:18px;height:18px;color:#7c3aed;"></i>
+            <span style="font-size:13px;font-weight:600;">WordPress</span>
+          </div>
+          <div class="card-sm" style="display:flex;align-items:center;gap:10px;">
+            <i data-lucide="globe" style="width:18px;height:18px;color:var(--neon-b);"></i>
+            <span style="font-size:13px;font-weight:600;">Any HTML</span>
+          </div>
+          <div class="card-sm" style="display:flex;align-items:center;gap:10px;">
+            <i data-lucide="code-2" style="width:18px;height:18px;color:#f59e0b;"></i>
+            <span style="font-size:13px;font-weight:600;">Webflow</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /#content -->
+</div><!-- /#main -->
+
+<!-- ──── AI MERCHANT SIDEBAR ──────────────────── -->
+<div id="ai-sidebar">
+  <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;">
+    <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--neon-g),var(--neon-b));display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+      <i data-lucide="brain-circuit" style="width:16px;height:16px;color:#050a0f;"></i>
+    </div>
+    <div>
+      <div style="font-size:14px;font-weight:700;font-family:'Syne',sans-serif;">AI Merchant Assistant</div>
+      <div style="font-size:11px;color:var(--neon-g);font-family:'IBM Plex Mono',monospace;">● Ready to advise</div>
+    </div>
+  </div>
+
+  <!-- Quick prompts -->
+  <div style="padding:12px;border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:6px;">
+    <button class="btn btn-outline" style="padding:5px 10px;font-size:11px;" onclick="quickPrompt('How can I increase sales this week?')">📈 Grow Sales</button>
+    <button class="btn btn-outline" style="padding:5px 10px;font-size:11px;" onclick="quickPrompt('Summarize my recent customer feedback')">💬 Feedback</button>
+    <button class="btn btn-outline" style="padding:5px 10px;font-size:11px;" onclick="quickPrompt('Which products should I promote right now?')">🎯 Promote</button>
+    <button class="btn btn-outline" style="padding:5px 10px;font-size:11px;" onclick="quickPrompt('Why is my conversion rate low?')">🔍 Diagnose</button>
+  </div>
+
+  <!-- Messages -->
+  <div id="assistantMessages" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;">
+    <div class="chat-msg assistant animate-in">
+      <p style="font-size:12px;color:var(--neon-b);margin-bottom:4px;font-family:'IBM Plex Mono',monospace;">AI ASSISTANT</p>
+      Hi! I'm your AI Merchant Advisor. Ask me anything about your store performance, sales strategy, or how to optimize your AI agent. 🚀
+    </div>
+  </div>
+
+  <!-- Input -->
+  <div style="padding:12px;border-top:1px solid var(--border);">
+    <div style="display:flex;gap:8px;">
+      <input class="form-input" id="assistantInput" placeholder="Ask your AI advisor..." style="flex:1;" onkeydown="if(event.key==='Enter')sendToAssistant()"/>
+      <button class="btn btn-primary" style="padding:9px 14px;flex-shrink:0;" onclick="sendToAssistant()">
+        <i data-lucide="send" style="width:14px;height:14px;"></i>
+      </button>
+    </div>
+    <div style="font-size:10px;color:var(--text-3);margin-top:6px;font-family:'IBM Plex Mono',monospace;text-align:center;">Powered by LLaMA-70B · Groq</div>
+  </div>
+</div>
+
+<script>
+lucide.createIcons();
+
+// ── State ────────────────────────────────────────
+const DEMO_STORE_ID = "demo-store-001";
+let currentTab = "analytics";
+let ordersData = [];
+let filteredOrders = [];
+let currentPage = 1;
+const PAGE_SIZE = 10;
+let selectedPersonality = "professional";
+let assistantHistory = [];
+let revenueChart, statusChart;
+
+// ── Mock Data (used until Supabase connected) ────
+const MOCK_ANALYTICS = {
+  revenue: 14_320, activeChats: 47, conversionRate: 87,
+  totalOrders: 132, topProduct: "SoundX Pro Headset",
+  avgOrderValue: 108.48, currency: "USD",
+};
+
+const MOCK_ORDERS = [
+  { id:"1", customer_name:"Ahmed Al-Rashidi", customer_email:"ahmed@email.com", customer_phone:"+212 6XX XXX XXX", product_name:"SoundX Pro", product_price:89, currency:"USD", status:"confirmed", created_at:"2026-01-15T10:22:00Z" },
+  { id:"2", customer_name:"Sofia Morales", customer_email:"sofia@gmail.com", customer_phone:"+34 600 XXX XXX", product_name:"4K Webcam Pro", product_price:129, currency:"USD", status:"interested", created_at:"2026-01-15T09:15:00Z" },
+  { id:"3", customer_name:"Kwame Asante", customer_email:"kwame@outlook.com", customer_phone:"+233 XX XXX XXXX", product_name:"Mech Keyboard X", product_price:149, currency:"USD", status:"lead", created_at:"2026-01-15T08:44:00Z" },
+  { id:"4", customer_name:"Layla Hassan", customer_email:"layla@hotmail.com", customer_phone:"+971 5X XXX XXXX", product_name:"Gaming Mouse Ultra", product_price:79, currency:"USD", status:"confirmed", created_at:"2026-01-14T18:30:00Z" },
+  { id:"5", customer_name:"Pierre Dubois", customer_email:"pierre@gmail.com", customer_phone:"+33 6XX XXX XXX", product_name:"SoundX Pro", product_price:89, currency:"USD", status:"confirmed", created_at:"2026-01-14T16:10:00Z" },
+  { id:"6", customer_name:"Nkechi Okonkwo", customer_email:"nkechi@email.com", customer_phone:"+234 80X XXX XXXX", product_name:"USB Hub 10-Port", product_price:49, currency:"USD", status:"cancelled", created_at:"2026-01-14T14:55:00Z" },
+  { id:"7", customer_name:"Carlos Ramirez", customer_email:"carlos@gmail.com", customer_phone:"+52 55 XXXX XXXX", product_name:"Laptop Stand Pro", product_price:69, currency:"USD", status:"interested", created_at:"2026-01-14T12:00:00Z" },
+  { id:"8", customer_name:"Fatima Benali", customer_email:"fatima@email.ma", customer_phone:"+212 7XX XXX XXX", product_name:"Wireless Charger", product_price:35, currency:"USD", status:"confirmed", created_at:"2026-01-14T10:30:00Z" },
+];
+
+const MOCK_PRODUCTS = [
+  { id:"p1", name:"SoundX Pro Headset", price:89, stock:12, category:"Audio", is_active:true },
+  { id:"p2", name:"4K Webcam Pro", price:129, stock:8, category:"Video", is_active:true },
+  { id:"p3", name:"Mechanical Keyboard X", price:149, stock:5, category:"Input", is_active:true },
+  { id:"p4", name:"Gaming Mouse Ultra", price:79, stock:22, category:"Input", is_active:true },
+  { id:"p5", name:"USB Hub 10-Port", price:49, stock:30, category:"Accessories", is_active:true },
+  { id:"p6", name:"Wireless Charger 65W", price:35, stock:0, category:"Charging", is_active:false },
+];
+
+// ── Tab Management ───────────────────────────────
+function showTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('[id^="tab-"]').forEach(t => t.style.display = "none");
+  document.getElementById("tab-" + tab).style.display = "block";
+  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+  event.currentTarget.classList.add("active");
+  if (tab === "orders") renderOrders();
+  if (tab === "products") renderProducts();
+}
+
+// ── Analytics ────────────────────────────────────
+function refreshAnalytics() {
+  const d = MOCK_ANALYTICS;
+  const sym = "$";
+  document.getElementById("stat-revenue").textContent = sym + d.revenue.toLocaleString();
+  document.getElementById("stat-revenue-change").textContent = "↑ 23% vs last week";
+  document.getElementById("stat-chats").textContent = d.activeChats;
+  document.getElementById("stat-chats-sub").textContent = d.activeChats + " live conversations";
+  document.getElementById("stat-conversion").textContent = d.conversionRate + "%";
+  document.getElementById("stat-orders").textContent = d.totalOrders;
+  document.getElementById("stat-orders-sub").textContent = "Confirmed today: 14";
+  document.getElementById("rev-bar").style.width = Math.min(d.conversionRate, 100) + "%";
+  document.getElementById("orderBadge").textContent = "12";
+  document.getElementById("lastUpdated").textContent = "Updated " + new Date().toLocaleTimeString();
+  renderRecentActivity();
+}
+
+function setChartPeriod(days) {
+  const labels = [], data = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    labels.push(d.toLocaleDateString("en-US", {month:"short", day:"numeric"}));
+    data.push(Math.floor(Math.random() * 2000 + 500));
+  }
+  revenueChart.data.labels = labels;
+  revenueChart.data.datasets[0].data = data;
+  revenueChart.update();
+}
+
+function initCharts() {
+  // Revenue Chart
+  const rCtx = document.getElementById("revenueChart").getContext("2d");
+  const labels = [], data = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    labels.push(d.toLocaleDateString("en-US", {month:"short", day:"numeric"}));
+    data.push(Math.floor(Math.random() * 2500 + 800));
+  }
+  revenueChart = new Chart(rCtx, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [{
+        label: "Revenue ($)",
+        data,
+        borderColor: "#00ff88",
+        backgroundColor: "rgba(0,255,136,0.06)",
+        borderWidth: 2,
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: "#00ff88",
+        pointRadius: 4,
+        pointHoverRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: "rgba(0,212,255,0.05)" }, ticks: { color: "#7a9bb5", font: { family: "IBM Plex Mono", size: 11 } } },
+        y: { grid: { color: "rgba(0,212,255,0.05)" }, ticks: { color: "#7a9bb5", font: { family: "IBM Plex Mono", size: 11 }, callback: v => "$" + v.toLocaleString() } }
+      }
+    }
+  });
+
+  // Status Pie
+  const sCtx = document.getElementById("statusChart").getContext("2d");
+  statusChart = new Chart(sCtx, {
+    type: "doughnut",
+    data: {
+      labels: ["Confirmed", "Interested", "Lead", "Cancelled"],
+      datasets: [{ data: [132, 48, 97, 18], backgroundColor: ["#00ff88","#00d4ff","#a78bfa","#ef4444"], borderWidth: 0, hoverOffset: 4 }]
+    },
+    options: {
+      cutout: "70%",
+      plugins: { legend: { display: false } },
+      responsive: true, maintainAspectRatio: false,
+    }
+  });
+
+  const legendEl = document.getElementById("statusLegend");
+  const statuses = [{ label:"Confirmed", color:"#00ff88", val:132 }, { label:"Interested", color:"#00d4ff", val:48 }, { label:"Lead", color:"#a78bfa", val:97 }, { label:"Cancelled", color:"#ef4444", val:18 }];
+  legendEl.innerHTML = statuses.map(s => `
+    <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="width:8px;height:8px;border-radius:50%;background:${s.color};display:inline-block;"></span>
+        <span style="color:var(--text-2);">${s.label}</span>
+      </div>
+      <strong style="color:var(--text-1);">${s.val}</strong>
+    </div>
+  `).join("");
+}
+
+function renderRecentActivity() {
+  const events = [
+    { icon: "user-check", color: "var(--neon-g)", msg: "New lead captured: <strong>Ahmed Al-Rashidi</strong> — SoundX Pro $89", time: "2m ago" },
+    { icon: "check-circle", color: "var(--neon-b)", msg: "Order confirmed: <strong>Layla Hassan</strong> via WhatsApp", time: "8m ago" },
+    { icon: "message-square", color: "#a78bfa", msg: "AI handled 47 simultaneous conversations", time: "15m ago" },
+    { icon: "zap", color: "#fbbf24", msg: "Conversion milestone: <strong>87%</strong> this hour", time: "22m ago" },
+    { icon: "alert-circle", color: "#ef4444", msg: "Low stock alert: <strong>Mech Keyboard X</strong> — 5 left", time: "1h ago" },
+  ];
+  document.getElementById("recentActivity").innerHTML = events.map(e => `
+    <div style="display:flex;align-items:flex-start;gap:10px;padding:10px;border-radius:8px;background:var(--bg-1);border:1px solid var(--border-2);">
+      <div style="background:${e.color}18;border-radius:7px;padding:7px;flex-shrink:0;">
+        <i data-lucide="${e.icon}" style="width:14px;height:14px;color:${e.color};"></i>
+      </div>
+      <div style="flex:1;">
+        <div style="font-size:13px;line-height:1.5;">${e.msg}</div>
+        <div style="font-size:11px;color:var(--text-3);font-family:'IBM Plex Mono',monospace;margin-top:2px;">${e.time}</div>
+      </div>
+    </div>
+  `).join("");
+  lucide.createIcons();
+}
+
+// ── Orders CRM ───────────────────────────────────
+function renderOrders() {
+  ordersData = MOCK_ORDERS;
+  filteredOrders = [...ordersData];
+  renderOrdersPage();
+}
+
+function filterOrders() {
+  const q = document.getElementById("ordersSearch").value.toLowerCase();
+  const s = document.getElementById("statusFilter").value;
+  filteredOrders = ordersData.filter(o => {
+    const matchQ = !q || (o.customer_name||"").toLowerCase().includes(q) || (o.product_name||"").toLowerCase().includes(q);
+    const matchS = !s || o.status === s;
+    return matchQ && matchS;
+  });
+  currentPage = 1;
+  renderOrdersPage();
+}
+
+function renderOrdersPage() {
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const page = filteredOrders.slice(start, start + PAGE_SIZE);
+  const totalPages = Math.ceil(filteredOrders.length / PAGE_SIZE) || 1;
+
+  const statusClasses = { confirmed:"badge-green", interested:"badge-blue", lead:"badge-amber", cancelled:"badge-red" };
+  const statusDots = { confirmed:"●", interested:"◉", lead:"○", cancelled:"✕" };
+
+  document.getElementById("ordersBody").innerHTML = page.length ? page.map(o => `
+    <tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:32px;height:32px;border-radius:50%;background:var(--bg-3);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;border:1px solid var(--border);">${(o.customer_name||"?")[0]}</div>
+          <div><div style="font-weight:600;font-size:13px;">${o.customer_name||"Unknown"}</div></div>
+        </div>
+      </td>
+      <td>
+        <div style="font-size:12px;color:var(--text-2);">${o.customer_email||"—"}</div>
+        <div style="font-size:12px;color:var(--text-3);font-family:'IBM Plex Mono',monospace;">${o.customer_phone||"—"}</div>
+      </td>
+      <td><span style="font-weight:600;">${o.product_name||"—"}</span></td>
+      <td><span style="font-family:'IBM Plex Mono',monospace;color:var(--neon-g);">$${o.product_price||0}</span></td>
+      <td><span class="badge ${statusClasses[o.status]||'badge-amber'}">${statusDots[o.status]} ${o.status}</span></td>
+      <td style="font-size:12px;color:var(--text-2);font-family:'IBM Plex Mono',monospace;">${new Date(o.created_at).toLocaleString()}</td>
+      <td>
+        <div style="display:flex;gap:6px;">
+          ${o.status !== "confirmed" ? `<button class="btn btn-primary" style="padding:5px 10px;font-size:11px;" onclick="confirmOrder('${o.id}')"><i data-lucide="check" style="width:12px;height:12px;"></i> Confirm</button>` : ""}
+          <button class="btn btn-whatsapp" style="padding:5px 10px;font-size:11px;" onclick="whatsappConfirm('${o.id}')">
+            <i data-lucide="message-circle" style="width:12px;height:12px;"></i> WhatsApp
+          </button>
+        </div>
+      </td>
+    </tr>
+  `).join("") : `<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-3);">No results found</td></tr>`;
+
+  document.getElementById("ordersCount").textContent = `${filteredOrders.length} records`;
+  document.getElementById("pageInfo").textContent = `${currentPage} / ${totalPages}`;
+  lucide.createIcons();
+}
+
+function changePage(dir) {
+  const totalPages = Math.ceil(filteredOrders.length / PAGE_SIZE) || 1;
+  currentPage = Math.max(1, Math.min(totalPages, currentPage + dir));
+  renderOrdersPage();
+}
+
+function confirmOrder(id) {
+  const o = ordersData.find(x => x.id === id);
+  if (o) { o.status = "confirmed"; filterOrders(); showToast("Order confirmed ✓", "green"); }
+}
+
+function whatsappConfirm(id) {
+  const o = ordersData.find(x => x.id === id);
+  if (!o) return;
+  const phone = (o.customer_phone||"").replace(/\D/g,"") || "1234567890";
+  const msg = encodeURIComponent(`Hi ${o.customer_name}! Your order for ${o.product_name} ($${o.product_price}) has been confirmed. We'll ship within 3-5 business days. Thank you! 🎉`);
+  window.open(`https://wa.me/${phone}?text=${msg}`, "_blank");
+}
+
+function exportLeads() {
+  const csv = ["Name,Email,Phone,Product,Price,Status,Date",
+    ...filteredOrders.map(o => `"${o.customer_name}","${o.customer_email||''}","${o.customer_phone||''}","${o.product_name}","${o.product_price}","${o.status}","${o.created_at}"`)
+  ].join("\n");
+  const a = document.createElement("a"); a.href = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
+  a.download = "salesbot-leads.csv"; a.click();
+}
+
+// ── Products ─────────────────────────────────────
+function renderProducts() {
+  const rows = MOCK_PRODUCTS.map(p => `
+    <tr>
+      <td><span style="font-weight:600;">${p.name}</span></td>
+      <td><span style="font-family:'IBM Plex Mono',monospace;color:var(--neon-g);">$${p.price}</span></td>
+      <td>
+        <span style="font-family:'IBM Plex Mono',monospace;${p.stock === 0 ? 'color:#ef4444;' : p.stock < 10 ? 'color:#fbbf24;' : ''}">${p.stock}</span>
+        ${p.stock === 0 ? '<span class="badge badge-red" style="margin-left:6px;">Out</span>' : p.stock < 10 ? '<span class="badge badge-amber" style="margin-left:6px;">Low</span>' : ''}
+      </td>
+      <td style="color:var(--text-2);">${p.category}</td>
+      <td><span class="badge ${p.is_active ? 'badge-green':'badge-red'}">${p.is_active ? '● Active' : '✕ Inactive'}</span></td>
+      <td>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-outline" style="padding:5px 10px;font-size:11px;"><i data-lucide="edit" style="width:12px;height:12px;"></i></button>
+          <button class="btn btn-outline" style="padding:5px 10px;font-size:11px;color:#ef4444;border-color:rgba(239,68,68,0.2);"><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button>
+        </div>
+      </td>
+    </tr>
+  `).join("");
+  document.getElementById("productsBody").innerHTML = rows;
+  lucide.createIcons();
+}
+
+function openProductModal() {
+  document.getElementById("productModal").style.display = "flex";
+}
+function closeProductModal(e) {
+  if (!e || e.target === document.getElementById("productModal")) {
+    document.getElementById("productModal").style.display = "none";
+    ["p-name","p-price","p-stock","p-category","p-sku","p-desc"].forEach(id => document.getElementById(id).value = "");
+  }
+}
+function saveProduct() {
+  const name = document.getElementById("p-name").value.trim();
+  const price = parseFloat(document.getElementById("p-price").value) || 0;
+  if (!name) { showToast("Product name is required", "red"); return; }
+  MOCK_PRODUCTS.push({ id:"p"+Date.now(), name, price, stock: parseInt(document.getElementById("p-stock").value)||0, category: document.getElementById("p-category").value||"General", is_active:true });
+  renderProducts();
+  closeProductModal();
+  showToast("Product saved ✓", "green");
+}
+
+// ── Store Setup ───────────────────────────────────
+function selectPersonality(p) {
+  selectedPersonality = p;
+  document.querySelectorAll(".personality-opt").forEach(el => el.classList.remove("selected"));
+  event.currentTarget.classList.add("selected");
+}
+
+function saveStoreSettings() {
+  const name = document.getElementById("cfg-name").value;
+  document.getElementById("storeNameLabel").textContent = name;
+  showToast("Store settings saved ✓ AI will update on next conversation", "green");
+}
+
+// ── Widget ────────────────────────────────────────
+function copyEmbed() {
+  const code = `<!-- SalesBot AI Widget -->\n<script src="https://cdn.salesbot.ai/widget/v2/chat.js" data-store="DEMO_STORE_001" data-theme="dark" data-lang="auto"><\/script>`;
+  navigator.clipboard.writeText(code).then(() => showToast("Embed code copied!", "blue"));
+}
+
+// ── AI Merchant Assistant ─────────────────────────
+async function sendToAssistant() {
+  const input = document.getElementById("assistantInput");
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = "";
+  appendAssistantMsg(msg, "user");
+  assistantHistory.push({ role: "user", content: msg });
+
+  const thinking = appendThinking();
+
+  try {
+    const systemPrompt = SalesBotConfig.buildMerchantPrompt(
+      { name: "TechVault Store", currency: "USD" },
+      MOCK_ANALYTICS
+    );
+    const messages = [{ role:"system", content: systemPrompt }, ...assistantHistory.slice(-8)];
+    const result = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type":"application/json", "Authorization": `Bearer ${SalesBotConfig.getNextApiKey()}` },
+      body: JSON.stringify({ model:"llama3-70b-8192", max_tokens:512, temperature:0.7, messages })
+    });
+    const data = await result.json();
+    const reply = data.choices?.[0]?.message?.content || "I couldn't generate a response right now.";
+    thinking.remove();
+    assistantHistory.push({ role:"assistant", content: reply });
+    appendAssistantMsg(reply, "assistant");
+  } catch(e) {
+    thinking.remove();
+    appendAssistantMsg("API connection failed. Please check your Groq API key in config.js.", "assistant");
+  }
+}
+
+function quickPrompt(p) {
+  document.getElementById("assistantInput").value = p;
+  sendToAssistant();
+}
+
+function appendAssistantMsg(msg, role) {
+  const container = document.getElementById("assistantMessages");
+  const el = document.createElement("div");
+  el.className = "chat-msg " + role + " animate-in";
+  el.innerHTML = role === "assistant"
+    ? `<p style="font-size:11px;color:var(--neon-b);margin-bottom:4px;font-family:'IBM Plex Mono',monospace;">AI ASSISTANT</p>${msg}`
+    : msg;
+  container.appendChild(el);
+  container.scrollTop = container.scrollHeight;
+  return el;
+}
+
+function appendThinking() {
+  const container = document.getElementById("assistantMessages");
+  const el = document.createElement("div");
+  el.className = "chat-msg assistant animate-in";
+  el.innerHTML = `<div style="display:flex;gap:4px;align-items:center;">
+    <span style="width:6px;height:6px;border-radius:50%;background:var(--text-2);animation:pulse-dot 0.8s ease-in-out infinite;display:inline-block;"></span>
+    <span style="width:6px;height:6px;border-radius:50%;background:var(--text-2);animation:pulse-dot 0.8s ease-in-out 0.15s infinite;display:inline-block;"></span>
+    <span style="width:6px;height:6px;border-radius:50%;background:var(--text-2);animation:pulse-dot 0.8s ease-in-out 0.3s infinite;display:inline-block;"></span>
+  </div>`;
+  container.appendChild(el);
+  container.scrollTop = container.scrollHeight;
+  return el;
+}
+
+// ── Toast ─────────────────────────────────────────
+function showToast(msg, type = "green") {
+  const colors = { green: "var(--neon-g)", blue: "var(--neon-b)", red: "#ef4444" };
+  const t = document.createElement("div");
+  t.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:9999;background:var(--bg-2);border:1px solid ${colors[type]||colors.green};border-radius:10px;padding:12px 20px;font-size:13px;font-weight:600;color:${colors[type]||colors.green};box-shadow:0 8px 32px rgba(0,0,0,0.4);animation:slide-in 0.3s ease;font-family:'Syne',sans-serif;display:flex;align-items:center;gap:8px;`;
+  t.innerHTML = `<i data-lucide="${type==='red'?'alert-circle':'check-circle-2'}" style="width:16px;height:16px;"></i> ${msg}`;
+  document.body.appendChild(t); lucide.createIcons();
+  setTimeout(() => t.remove(), 3500);
+}
+
+// ── Init ──────────────────────────────────────────
+document.addEventListener("DOMContentLoaded", () => {
+  initCharts();
+  refreshAnalytics();
+  // Simulate live updates
+  setInterval(() => {
+    MOCK_ANALYTICS.activeChats = Math.max(30, MOCK_ANALYTICS.activeChats + Math.floor(Math.random()*3-1));
+    document.getElementById("stat-chats").textContent = MOCK_ANALYTICS.activeChats;
+    document.getElementById("lastUpdated").textContent = "Updated " + new Date().toLocaleTimeString();
+  }, 8000);
+});
+</script>
+</body>
+</html>
