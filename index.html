@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SalesBot AI — The AI Employee That Never Sleeps</title>
+<meta name="description" content="Replace manual customer service with an AI Sales Agent that understands inventory, persuades customers, and logs orders 24/7."/>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  :root {
+    --neon-g: #00ff88;
+    --neon-b: #00d4ff;
+    --neon-b2: #0099ff;
+    --bg-0: #050a0f;
+    --bg-1: #080f17;
+    --bg-2: #0d1825;
+    --bg-3: #111f30;
+    --border: rgba(0,212,255,0.12);
+    --text-1: #e8f4ff;
+    --text-2: #7a9bb5;
+    --text-3: #3d5a73;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg-0);
+    color: var(--text-1);
+    overflow-x: hidden;
+  }
+  h1,h2,h3,h4 { font-family: 'Syne', sans-serif; }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+
+  /* ── Background grid ─────────────────── */
+  .grid-bg {
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  /* ── Neon glow text ──────────────────── */
+  .glow-g { color: var(--neon-g); text-shadow: 0 0 20px rgba(0,255,136,0.5); }
+  .glow-b { color: var(--neon-b); text-shadow: 0 0 20px rgba(0,212,255,0.5); }
+
+  /* ── Gradient border cards ───────────── */
+  .card-border {
+    position: relative;
+    border-radius: 16px;
+    background: var(--bg-2);
+  }
+  .card-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(0,212,255,0.3), rgba(0,255,136,0.1), transparent);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* ── CTA buttons ─────────────────────── */
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 14px 32px; border-radius: 8px; font-weight: 600;
+    font-family: 'Syne', sans-serif; font-size: 16px;
+    background: linear-gradient(135deg, var(--neon-g), #00c870);
+    color: #050a0f; cursor: pointer; border: none;
+    transition: all 0.3s; position: relative; overflow: hidden;
+    text-decoration: none;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,255,136,0.35); }
+  .btn-primary::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+    transform: translateX(-100%); transition: 0.6s;
+  }
+  .btn-primary:hover::after { transform: translateX(100%); }
+
+  .btn-outline {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 13px 28px; border-radius: 8px; font-weight: 600;
+    font-family: 'Syne', sans-serif; font-size: 16px;
+    border: 1px solid var(--border); color: var(--text-1);
+    background: transparent; cursor: pointer;
+    transition: all 0.3s; text-decoration: none;
+  }
+  .btn-outline:hover {
+    border-color: var(--neon-b);
+    color: var(--neon-b);
+    box-shadow: 0 0 24px rgba(0,212,255,0.15);
+  }
+
+  /* ── Tag pill ────────────────────────── */
+  .tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 12px; border-radius: 99px; font-size: 12px;
+    font-family: 'IBM Plex Mono', monospace; font-weight: 500;
+    border: 1px solid rgba(0,255,136,0.25);
+    background: rgba(0,255,136,0.06); color: var(--neon-g);
+  }
+
+  /* ── Feature icon box ────────────────── */
+  .icon-box {
+    width: 48px; height: 48px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,212,255,0.08);
+    border: 1px solid rgba(0,212,255,0.2);
+    flex-shrink: 0;
+  }
+
+  /* ── Stat number ─────────────────────── */
+  .stat-num {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 48px; line-height: 1;
+  }
+
+  /* ── Animations ──────────────────────── */
+  @keyframes float {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+  }
+  @keyframes pulse-ring {
+    0% { transform: scale(0.9); opacity: 1; }
+    100% { transform: scale(1.6); opacity: 0; }
+  }
+  @keyframes scan-line {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100vh); }
+  }
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+  @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+  .animate-float { animation: float 4s ease-in-out infinite; }
+  .animate-fade-up { animation: fade-up 0.7s ease forwards; }
+  .anim-delay-1 { animation-delay: 0.1s; }
+  .anim-delay-2 { animation-delay: 0.2s; }
+  .anim-delay-3 { animation-delay: 0.3s; }
+  .anim-delay-4 { animation-delay: 0.4s; }
+  .anim-delay-5 { animation-delay: 0.5s; }
+  .opacity-0-init { opacity: 0; }
+
+  .cursor-blink { animation: blink 1s step-end infinite; }
+
+  .scan-container { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+  .scan-line {
+    position: absolute; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0,212,255,0.25), transparent);
+    animation: scan-line 6s linear infinite;
+  }
+
+  /* ── Nav ─────────────────────────────── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    backdrop-filter: blur(20px);
+    background: rgba(5,10,15,0.85);
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ── Chat preview widget ─────────────── */
+  .chat-bubble {
+    border-radius: 18px 18px 18px 4px;
+    background: var(--bg-3);
+    border: 1px solid var(--border);
+    padding: 12px 16px;
+    max-width: 260px;
+    font-size: 14px;
+    line-height: 1.5;
+    position: relative;
+  }
+  .chat-bubble.outgoing {
+    border-radius: 18px 18px 4px 18px;
+    background: rgba(0,212,255,0.08);
+    border-color: rgba(0,212,255,0.2);
+    margin-left: auto;
+  }
+  .typing-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--text-2); display: inline-block;
+    animation: blink 1.2s ease-in-out infinite;
+  }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+  /* ── Ticker ──────────────────────────── */
+  .ticker-wrap { overflow: hidden; white-space: nowrap; }
+  .ticker-inner { display: inline-flex; animation: ticker 28s linear infinite; }
+  .ticker-item {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 0 32px; color: var(--text-2); font-size: 13px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .ticker-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--neon-g); }
+
+  /* ── Pricing card ────────────────────── */
+  .pricing-featured {
+    border-color: var(--neon-g) !important;
+    box-shadow: 0 0 48px rgba(0,255,136,0.12);
+  }
+  .pricing-badge {
+    position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+    background: linear-gradient(135deg, var(--neon-g), #00c870);
+    color: #050a0f; font-size: 11px; font-weight: 700;
+    font-family: 'IBM Plex Mono', monospace;
+    padding: 4px 16px; border-radius: 99px; white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Scan line overlay ────────────────────── -->
+<div class="scan-container" style="z-index:0; pointer-events:none">
+  <div class="scan-line"></div>
+</div>
+
+<!-- ──────────────────── NAV ──────────────────── -->
+<nav>
+  <div class="max-w-7xl mx-auto px-6 flex items-center justify-between h-16">
+    <div class="flex items-center gap-3">
+      <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--neon-g),var(--neon-b));display:flex;align-items:center;justify-content:center;">
+        <i data-lucide="bot" style="width:18px;height:18px;color:#050a0f;"></i>
+      </div>
+      <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:18px;">SalesBot<span class="glow-g">AI</span></span>
+    </div>
+    <div class="hidden md:flex items-center gap-8" style="font-size:14px; color:var(--text-2);">
+      <a href="#features" class="hover:text-white transition-colors">Features</a>
+      <a href="#how-it-works" class="hover:text-white transition-colors">How it Works</a>
+      <a href="#pricing" class="hover:text-white transition-colors">Pricing</a>
+      <a href="#integrations" class="hover:text-white transition-colors">Integrations</a>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="dashboard.html" class="btn-outline" style="padding:9px 20px;font-size:14px;">Dashboard</a>
+      <a href="#pricing" class="btn-primary" style="padding:9px 20px;font-size:14px;">Get Free Year</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ──────────────────── HERO ─────────────────── -->
+<section class="grid-bg relative min-h-screen flex items-center" style="padding-top:80px;">
+  <!-- Radial glow backdrop -->
+  <div style="position:absolute;top:20%;left:50%;transform:translateX(-50%);width:800px;height:500px;background:radial-gradient(ellipse,rgba(0,212,255,0.07) 0%,transparent 70%);pointer-events:none;"></div>
+
+  <div class="max-w-7xl mx-auto px-6 py-24 w-full">
+    <div class="grid lg:grid-cols-2 gap-16 items-center">
+
+      <!-- Left: Copy ───────────────────────── -->
+      <div>
+        <div class="tag opacity-0-init animate-fade-up anim-delay-1" style="margin-bottom:24px;">
+          <span class="typing-dot" style="background:var(--neon-g);animation:none;"></span>
+          LIVE — 3,247 stores active right now
+        </div>
+
+        <h1 class="opacity-0-init animate-fade-up anim-delay-2" style="font-size:clamp(42px,5.5vw,76px);font-weight:800;line-height:1.05;margin-bottom:24px;">
+          The AI Employee<br/>
+          <span class="glow-g">That Never</span><br/>
+          Sleeps<span class="glow-b cursor-blink">.</span>
+        </h1>
+
+        <p class="opacity-0-init animate-fade-up anim-delay-3" style="font-size:18px;color:var(--text-2);line-height:1.7;max-width:500px;margin-bottom:36px;">
+          Deploy a fully autonomous AI Sales Agent in 3 minutes.
+          It learns your products, answers questions 24/7,
+          captures leads, and logs confirmed orders — while you sleep.
+        </p>
+
+        <div class="opacity-0-init animate-fade-up anim-delay-4" style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:48px;">
+          <a href="#pricing" class="btn-primary">
+            <i data-lucide="gift" style="width:18px;height:18px;"></i>
+            Claim Free Year 2026
+          </a>
+          <a href="chat.html?demo=1" class="btn-outline">
+            <i data-lucide="play-circle" style="width:18px;height:18px;"></i>
+            Watch Live Demo
+          </a>
+        </div>
+
+        <!-- Trust badges -->
+        <div class="opacity-0-init animate-fade-up anim-delay-5" style="display:flex;flex-wrap:wrap;gap:20px;align-items:center;">
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-2);">
+            <i data-lucide="shield-check" style="width:16px;height:16px;color:var(--neon-g);"></i>
+            No credit card required
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-2);">
+            <i data-lucide="zap" style="width:16px;height:16px;color:var(--neon-g);"></i>
+            3-minute setup
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-2);">
+            <i data-lucide="globe" style="width:16px;height:16px;color:var(--neon-g);"></i>
+            40+ countries supported
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Chat Preview ──────────────── -->
+      <div class="animate-float" style="position:relative;">
+        <!-- Glow behind -->
+        <div style="position:absolute;inset:-20px;background:radial-gradient(ellipse,rgba(0,212,255,0.1) 0%,transparent 70%);pointer-events:none;border-radius:50%;"></div>
+
+        <div class="card-border" style="padding:0;overflow:hidden;position:relative;">
+          <!-- Widget header -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:var(--bg-1);border-bottom:1px solid var(--border);">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="position:relative;">
+                <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--neon-g),var(--neon-b));display:flex;align-items:center;justify-content:center;">
+                  <i data-lucide="bot" style="width:18px;height:18px;color:#050a0f;"></i>
+                </div>
+                <div style="position:absolute;bottom:1px;right:1px;width:9px;height:9px;background:var(--neon-g);border-radius:50%;border:2px solid var(--bg-1);"></div>
+              </div>
+              <div>
+                <div style="font-size:14px;font-weight:600;font-family:'Syne',sans-serif;">TechVault AI</div>
+                <div style="font-size:11px;color:var(--neon-g);font-family:'IBM Plex Mono',monospace;">● Online now</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <div style="width:10px;height:10px;border-radius:50%;background:#ff5f57;"></div>
+              <div style="width:10px;height:10px;border-radius:50%;background:#febc2e;"></div>
+              <div style="width:10px;height:10px;border-radius:50%;background:#28c840;"></div>
+            </div>
+          </div>
+
+          <!-- Chat messages -->
+          <div style="padding:20px;background:var(--bg-2);display:flex;flex-direction:column;gap:14px;min-height:320px;">
+            <div class="chat-bubble">
+              <span style="color:var(--neon-b);font-size:11px;font-family:'IBM Plex Mono',monospace;display:block;margin-bottom:4px;">SalesBot AI</span>
+              👋 Hi! I'm Aria, your AI shopping assistant. What are you looking for today?
+            </div>
+            <div class="chat-bubble outgoing" style="text-align:right;">
+              I'm looking for a wireless gaming headset under $100
+            </div>
+            <div class="chat-bubble">
+              <span style="color:var(--neon-b);font-size:11px;font-family:'IBM Plex Mono',monospace;display:block;margin-bottom:4px;">SalesBot AI</span>
+              Perfect! 🎮 We have the <strong style="color:var(--neon-g);">SoundX Pro</strong> at <strong>$89</strong> — 40hr battery, noise cancellation, USB-C. Only <span style="color:#ff7043;">3 left in stock!</span><br/><br/>May I get your name to reserve one?
+            </div>
+            <div class="chat-bubble outgoing" style="text-align:right;">
+              Sure, I'm Ahmed
+            </div>
+            <!-- Typing indicator -->
+            <div class="chat-bubble" style="width:fit-content;">
+              <div style="display:flex;gap:4px;align-items:center;padding:2px 0;">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lead captured banner -->
+          <div style="padding:12px 20px;background:rgba(0,255,136,0.05);border-top:1px solid rgba(0,255,136,0.15);display:flex;align-items:center;gap:10px;">
+            <i data-lucide="check-circle-2" style="width:16px;height:16px;color:var(--neon-g);flex-shrink:0;"></i>
+            <span style="font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--neon-g);">Lead captured → Dashboard notified</span>
+          </div>
+        </div>
+
+        <!-- Floating stats -->
+        <div class="card-border" style="position:absolute;top:-20px;right:-20px;padding:12px 16px;background:var(--bg-1);">
+          <div style="font-size:11px;color:var(--text-2);font-family:'IBM Plex Mono',monospace;margin-bottom:2px;">CONVERSION</div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--neon-g);">87%</div>
+        </div>
+        <div class="card-border" style="position:absolute;bottom:-20px;left:-20px;padding:12px 16px;background:var(--bg-1);">
+          <div style="font-size:11px;color:var(--text-2);font-family:'IBM Plex Mono',monospace;margin-bottom:2px;">RESPONSE TIME</div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--neon-b);">&lt;1s</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ──────────────────── TICKER ────────────────── -->
+<div style="border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--bg-1);padding:14px 0;overflow:hidden;">
+  <div class="ticker-wrap">
+    <div class="ticker-inner" id="ticker">
+      <!-- populated by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- ──────────────────── STATS ─────────────────── -->
+<section style="padding:80px 24px;background:var(--bg-1);">
+  <div class="max-w-7xl mx-auto">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:2px;border:1px solid var(--border);border-radius:16px;overflow:hidden;">
+      <div style="padding:40px 32px;background:var(--bg-2);text-align:center;">
+        <div class="stat-num glow-g">3.2M+</div>
+        <div style="font-size:14px;color:var(--text-2);margin-top:8px;">Conversations Handled</div>
+      </div>
+      <div style="padding:40px 32px;background:var(--bg-2);text-align:center;border-left:1px solid var(--border);">
+        <div class="stat-num glow-b">$48M</div>
+        <div style="font-size:14px;color:var(--text-2);margin-top:8px;">Revenue Generated</div>
+      </div>
+      <div style="padding:40px 32px;background:var(--bg-2);text-align:center;border-left:1px solid var(--border);">
+        <div class="stat-num" style="color:var(--text-1);">12,400</div>
+        <div style="font-size:14px;color:var(--text-2);margin-top:8px;">Active Stores</div>
+      </div>
+      <div style="padding:40px 32px;background:var(--bg-2);text-align:center;border-left:1px solid var(--border);">
+        <div class="stat-num" style="color:#fbbf24;">99.9%</div>
+        <div style="font-size:14px;color:var(--text-2);margin-top:8px;">Uptime SLA</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ──────────────────── FEATURES ─────────────── -->
+<section id="features" style="padding:100px 24px;">
+  <div class="max-w-7xl mx-auto">
+    <div style="text-align:center;margin-bottom:64px;">
+      <div class="tag" style="margin-bottom:16px;margin-left:auto;margin-right:auto;width:fit-content;">CORE CAPABILITIES</div>
+      <h2 style="font-size:clamp(32px,4vw,52px);font-weight:800;margin-bottom:16px;">Everything You Need to<br/><span class="glow-g">Automate Sales</span></h2>
+      <p style="font-size:16px;color:var(--text-2);max-width:520px;margin:auto;line-height:1.7;">A complete AI-powered sales infrastructure — not just a chatbot.</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;">
+
+      <!-- Feature cards -->
+      <div class="card-border" style="padding:32px;">
+        <div class="icon-box" style="margin-bottom:20px;background:rgba(0,255,136,0.08);border-color:rgba(0,255,136,0.2);">
+          <i data-lucide="brain-circuit" style="width:22px;height:22px;color:var(--neon-g);"></i>
+        </div>
+        <h3 style="font-size:18px;font-weight:700;margin-bottom:10px;">Intelligent Sales AI</h3>
+        <p style="font-size:14px;color:var(--text-2);line-height:1.7;">Powered by LLaMA-70B via Groq. Understands your catalogue, handles objections, and closes deals with human-level persuasion.</p>
+      </div>
+
+      <div class="card-border" style="padding:32px;">
+        <div class="icon-box" style="margin-bottom:20px;">
+          <i data-lucide="message-circle" style="width:22px;height:22px;color:var(--neon-b);"></i>
+        </div>
+        <h3 style="font-size:18px;font-weight:700;margin-bottom:10px;">WhatsApp Integration</h3>
+        <p style="font-size:14px;color:var(--text-2);line-height:1.7;">Confirm orders with one click via WhatsApp. Pre-formatted messages with order details sent directly to your number.</p>
+      </div>
+
+      <div class="card-border" style="padding:32px;">
+        <div class="icon-box" style="margin-bottom:20px;background:rgba(251,191,36,0.08);border-color:rgba(251,191,36,0.2);">
+          <i data-lucide="credit-card" style="width:22px;height:22px;color:#fbbf24;"></i>
+        </div>
+        <h3 style="font-size:18px;font-weight:700;margin-bottom:10px;">Multi-Currency Support</h3>
+        <p style="font-size:14px;color:var(--text-2);line-height:1.7;">USD, EUR, GBP, SAR, AED, MAD, EGP, NGN and 7 more. Auto-detects visitor's locale for seamless global commerce.</p>
+      </div>
+
+      <div class="card-border" style="padding:32px;">
+        <div class="icon-box" style="margin-bottom:20px;background:rgba(0,255,136,0.08);border-color:rgba(0,255,136,0.2);">
+          <i data-lucide="code-2" style="width:22px;height:22px;color:var(--neon-g);"></i>
+        </div>
+        <h3 style="font-size:18px;font-weight:700;margin-bottom:10px;">No-Code Setup</h3>
+        <p style="font-size:14px;color:var(--text-2);line-height:1.7;">Configure your AI in a visual wizard. Define products, policies, personality. Paste one script tag. Done in 3 minutes.</p>
+      </div>
+
+      <div class="card-border" style="padding:32px;">
+        <div class="icon-box" style="margin-bottom:20px;">
+          <i data-lucide="globe-2" style="width:22px;height:22px;color:var(--neon-b);"></i>
+        </div>
+        <h3 style="font-size:18px;font-weight:700;margin-bottom:10px;">RTL + Multi-Language</h3>
+        <p style="font-size:14px;color:var(--text-2);line-height:1.7;">Auto-detects Arabic, French, Spanish, and 4+ languages. Seamlessly switches between RTL and LTR layouts.</p>
+      </div>
+
+      <div class="card-border" style="padding:32px;">
+        <div class="icon-box" style="margin-bottom:20px;background:rgba(167,139,250,0.08);border-color:rgba(167,139,250,0.2);">
+          <i data-lucide="bar-chart-3" style="width:22px;height:22px;color:#a78bfa;"></i>
+        </div>
+        <h3 style="font-size:18px;font-weight:700;margin-bottom:10px;">Live Analytics Dashboard</h3>
+        <p style="font-size:14px;color:var(--text-2);line-height:1.7;">Real-time charts for revenue, conversions, and active chats. CRM table with full customer profiles captured by AI.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ──────────────────── HOW IT WORKS ─────────── -->
+<section id="how-it-works" style="padding:100px 24px;background:var(--bg-1);">
+  <div class="max-w-5xl mx-auto">
+    <div style="text-align:center;margin-bottom:64px;">
+      <div class="tag" style="margin-bottom:16px;margin-left:auto;margin-right:auto;width:fit-content;">SETUP IN 3 STEPS</div>
+      <h2 style="font-size:clamp(32px,4vw,52px);font-weight:800;">From Zero to <span class="glow-b">Automated</span></h2>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:4px;position:relative;">
+      <!-- Vertical line -->
+      <div style="position:absolute;left:24px;top:0;bottom:0;width:2px;background:linear-gradient(to bottom,var(--neon-b),var(--neon-g));opacity:0.3;"></div>
+
+      <div class="card-border" style="padding:32px 32px 32px 80px;position:relative;margin-left:0;">
+        <div style="position:absolute;left:0;top:50%;transform:translateY(-50%);width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,var(--neon-b),var(--neon-b2));display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:#050a0f;">1</div>
+        <h3 style="font-size:20px;font-weight:700;margin-bottom:8px;">Configure Your Store</h3>
+        <p style="color:var(--text-2);font-size:15px;line-height:1.7;">Add your products, set business rules, and choose an AI personality. No coding — pure visual setup in our wizard.</p>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+          <span class="tag">Products</span><span class="tag">Policies</span><span class="tag">Personality</span>
+        </div>
+      </div>
+
+      <div class="card-border" style="padding:32px 32px 32px 80px;position:relative;margin-top:16px;">
+        <div style="position:absolute;left:0;top:50%;transform:translateY(-50%);width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,var(--neon-g),#00c870);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:#050a0f;">2</div>
+        <h3 style="font-size:20px;font-weight:700;margin-bottom:8px;">Embed the Widget</h3>
+        <p style="color:var(--text-2);font-size:15px;line-height:1.7;">Copy one script tag. Paste in your website's <code style="color:var(--neon-b);font-family:'IBM Plex Mono',monospace;">&lt;body&gt;</code>. The AI chat bubble appears instantly.</p>
+        <div class="card-border" style="margin-top:12px;padding:12px 16px;background:var(--bg-0);">
+          <code class="mono" style="font-size:12px;color:var(--neon-g);">&lt;script src="https://cdn.salesbot.ai/widget/v2/chat.js" data-store="YOUR_ID"&gt;&lt;/script&gt;</code>
+        </div>
+      </div>
+
+      <div class="card-border" style="padding:32px 32px 32px 80px;position:relative;margin-top:16px;">
+        <div style="position:absolute;left:0;top:50%;transform:translateY(-50%);width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#a78bfa,#7c3aed);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:#fff;">3</div>
+        <h3 style="font-size:20px;font-weight:700;margin-bottom:8px;">Watch Orders Roll In</h3>
+        <p style="color:var(--text-2);font-size:15px;line-height:1.7;">Your AI handles every visitor 24/7. Leads and confirmed orders appear in your dashboard in real-time. Confirm via WhatsApp with one click.</p>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+          <span class="tag">Live CRM</span><span class="tag">WhatsApp Confirm</span><span class="tag">Zero Manual Work</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ──────────────────── INTEGRATIONS ─────────── -->
+<section id="integrations" style="padding:100px 24px;">
+  <div class="max-w-7xl mx-auto" style="text-align:center;">
+    <div class="tag" style="margin-bottom:16px;margin-left:auto;margin-right:auto;width:fit-content;">INTEGRATIONS</div>
+    <h2 style="font-size:clamp(28px,3.5vw,48px);font-weight:800;margin-bottom:48px;">Plugs Into Your Existing Stack</h2>
+    <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:16px;">
+      <!-- Integration badges -->
+      <div class="card-border" style="padding:16px 24px;display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;">
+        <i data-lucide="message-circle" style="width:20px;height:20px;color:#25d366;"></i> WhatsApp
+      </div>
+      <div class="card-border" style="padding:16px 24px;display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;">
+        <i data-lucide="shopping-bag" style="width:20px;height:20px;color:#96bf48;"></i> Shopify
+      </div>
+      <div class="card-border" style="padding:16px 24px;display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;">
+        <i data-lucide="package" style="width:20px;height:20px;color:#7c3aed;"></i> WooCommerce
+      </div>
+      <div class="card-border" style="padding:16px 24px;display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;">
+        <i data-lucide="database" style="width:20px;height:20px;color:#3ecf8e;"></i> Supabase
+      </div>
+      <div class="card-border" style="padding:16px 24px;display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;">
+        <i data-lucide="mail" style="width:20px;height:20px;color:#f06a35;"></i> Mailchimp
+      </div>
+      <div class="card-border" style="padding:16px 24px;display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;">
+        <i data-lucide="webhook" style="width:20px;height:20px;color:var(--neon-b);"></i> Zapier / Make
+      </div>
+      <div class="card-border" style="padding:16px 24px;display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;">
+        <i data-lucide="instagram" style="width:20px;height:20px;color:#e1306c;"></i> Instagram
+      </div>
+      <div class="card-border" style="padding:16px 24px;display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;">
+        <i data-lucide="facebook" style="width:20px;height:20px;color:#1877f2;"></i> Facebook Messenger
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ──────────────────── PRICING ──────────────── -->
+<section id="pricing" style="padding:100px 24px;background:var(--bg-1);">
+  <div class="max-w-6xl mx-auto">
+    <div style="text-align:center;margin-bottom:64px;">
+      <div class="tag" style="margin-bottom:16px;margin-left:auto;margin-right:auto;width:fit-content;">PRICING</div>
+      <h2 style="font-size:clamp(32px,4vw,52px);font-weight:800;margin-bottom:16px;">Claim Your <span class="glow-g">Free Year 2026</span></h2>
+      <p style="font-size:16px;color:var(--text-2);max-width:460px;margin:auto;">Limited offer — first 500 stores get Professional tier free for 12 months.</p>
+      <!-- Counter -->
+      <div style="margin-top:20px;display:inline-flex;align-items:center;gap:8px;background:rgba(255,77,77,0.08);border:1px solid rgba(255,77,77,0.2);border-radius:99px;padding:8px 20px;">
+        <i data-lucide="timer" style="width:16px;height:16px;color:#ff4d4d;"></i>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#ff7070;" id="claimedCount">347 / 500 claimed</span>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px;align-items:start;">
+
+      <!-- Starter -->
+      <div class="card-border" style="padding:32px;">
+        <div style="font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--text-2);letter-spacing:2px;margin-bottom:12px;">STARTER</div>
+        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:40px;margin-bottom:4px;">Free</div>
+        <div style="font-size:13px;color:var(--text-2);margin-bottom:28px;">Forever free tier</div>
+        <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:28px;font-size:14px;">
+          <div style="display:flex;gap:8px;align-items:center;"><i data-lucide="check" style="width:16px;height:16px;color:var(--neon-g);flex-shrink:0;"></i> 500 AI messages/month</div>
+          <div style="display:flex;gap:8px;align-items:center;"><i data-lucide="check" style="width:16px;height:16px;color:var(--neon-g);flex-shrink:0;"></i> 1 store, 10 products</div>
+          <div style="display:flex;gap:8px;align-items:center;"><i data-lucide="check" style="width:16px;height:16px;color:var(--neon-g);flex-shrink:0;"></i> Basic analytics</div>
+          <div style="display:flex;gap:8px;align-items:center;color:var(--text-3);"><i data-lucide="x" style="width:16px;height:16px;flex-shrink:0;"></i> WhatsApp integration</div>
+          <div style="display:flex;gap:8px;align-items:center;color:var(--text-3);"><i data-lucide="x" style="width:16px;height:16px;flex-shrink:0;"></i> AI Merchant Assistant</div>
+        </div>
+        <a href="dashboard.html" class="btn-outline" style="width:100%;justify-content:center;">Start Free</a>
+      </div>
+
+      <!-- Professional (featured) -->
+      <div class="card-border pricing-featured" style="padding:32px;position:relative;">
+        <div class="pricing-badge">🎉 FREE YEAR 2026 OFFER</div>
+        <div style="font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--neon-g);letter-spacing:2px;margin-bottom:12px;">PROFESSIONAL</div>
+        <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:4px;">
+          <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:40px;color:var(--neon-g);">$0</span>
+          <span style="font-size:14px;color:var(--text-2);text-decoration:line-through;">$49/mo</span>
+        </div>
+        <div style="font-size:13px;color:var(--text-2);margin-bottom:28px;">For 12 months — no credit card</div>
+        <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:28px;font-size:14px;">
+          <div style="display:flex;gap:8px;align-items:center;"><i data-lucide="check" style="width:16px;height:16px;color:var(--neon-g);flex-shrink:0;"></i> <strong>Unlimited</strong> AI messages</div>
+          <div style="display:flex;gap:8px;align-items:center;"><i data-lucide="check" style="width:16px;height:16px;color:var(--neon-g);flex-shrink:0;"></i> 5 stores, unlimited products</div>
+          <div style="display:flex;gap:8px;align-items:center;"><i data-lucide="check" style="width:16px;height:16px;color:var(--neon-g);flex-shrink:0;"></i> Full analytics suite</div>
+          <div style="display:flex;gap:8px;align-items:center;"><i data-lucide="check" style="width:16px;height:16px;color:var(--neon-g);flex-shrink:0;"></i> WhatsApp integration</div>
+          <div style="display:flex;gap:8px;align-items:center;"><i data-lucide="check" style="width:16px;height:16px;color:var(--neon-g);flex-shrink:0;"></i> AI Merchant Assistant</div>
+          <div style="display:flex;gap:8px;align-items:center;"><i data-lucide="check" style="width:16px;height:16px;color:var(--neon-g);flex-shrink:0;"></i> Multi-currency + RTL</div>
+          <div style="display:flex;gap:8px;align-items:center;"><i data-lucide="check" style="width:16px;height:16px;color:var(--neon-g);flex-shrink:0;"></i> Priority support</div>
+        </div>
+        <a href="dashboard.html" class="btn-primary" style="width:100%;justify-content:center;">
+          <i data-lucide="gift" style="width:16px;height:16px;"></i>
+          Claim Free Year
+        </a>
+      </div>
+
+      <!-- Enterprise -->
+      <div class="card-border" style="padding:32px;">
+        <div style="font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--text-2);letter-spacing:2px;margin-bottom:12px;">ENTERPRISE</div>
+        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:40px;margin-bottom:4px;">Custom</div>
+        <div style="font-size:13px;color:var(--text-2);margin-bottom:28px;">Tailored for scale</div>
+        <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:28px;font-size:14px;">
+          <div style="display:flex;gap:8px;align-items:center;"><i data-lucide="check" style="width:16px;height:16px;color:var(--neon-b);flex-shrink:0;"></i> Everything in Pro</div>
+          <div style="display:flex;gap:8px;align-items:center;"><i data-lucide="check" style="width:16px;height:16px;color:var(--neon-b);flex-shrink:0;"></i> Unlimited stores</div>
+          <div style="display:flex;gap:8px;align-items:center;"><i data-lucide="check" style="width:16px;height:16px;color:var(--neon-b);flex-shrink:0;"></i> White-label branding</div>
+          <div style="display:flex;gap:8px;align-items:center;"><i data-lucide="check" style="width:16px;height:16px;color:var(--neon-b);flex-shrink:0;"></i> Custom AI training</div>
+          <div style="display:flex;gap:8px;align-items:center;"><i data-lucide="check" style="width:16px;height:16px;color:var(--neon-b);flex-shrink:0;"></i> SLA 99.99% uptime</div>
+          <div style="display:flex;gap:8px;align-items:center;"><i data-lucide="check" style="width:16px;height:16px;color:var(--neon-b);flex-shrink:0;"></i> Dedicated account manager</div>
+        </div>
+        <a href="mailto:enterprise@salesbot.ai" class="btn-outline" style="width:100%;justify-content:center;">Contact Sales</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ──────────────────── CTA FOOTER ───────────── -->
+<section style="padding:100px 24px;position:relative;overflow:hidden;">
+  <div style="position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(0,212,255,0.06) 0%,transparent 70%);pointer-events:none;"></div>
+  <div class="max-w-3xl mx-auto text-center">
+    <div class="tag" style="margin-bottom:24px;margin-left:auto;margin-right:auto;width:fit-content;">LIMITED OFFER</div>
+    <h2 style="font-size:clamp(36px,5vw,64px);font-weight:800;margin-bottom:20px;line-height:1.1;">
+      Your Competitors Are<br/>Already Using <span class="glow-g">AI Sales.</span>
+    </h2>
+    <p style="font-size:18px;color:var(--text-2);margin-bottom:40px;line-height:1.7;">
+      Don't let them capture your customers first. Deploy SalesBot AI today — completely free for your entire first year.
+    </p>
+    <a href="dashboard.html" class="btn-primary" style="font-size:18px;padding:16px 40px;">
+      <i data-lucide="rocket" style="width:20px;height:20px;"></i>
+      Start Free — No Card Needed
+    </a>
+  </div>
+</section>
+
+<!-- ──────────────────── FOOTER ───────────────── -->
+<footer style="border-top:1px solid var(--border);padding:40px 24px;background:var(--bg-1);">
+  <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-6">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,var(--neon-g),var(--neon-b));display:flex;align-items:center;justify-content:center;">
+        <i data-lucide="bot" style="width:15px;height:15px;color:#050a0f;"></i>
+      </div>
+      <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px;">SalesBot<span class="glow-g">AI</span></span>
+    </div>
+    <div style="display:flex;gap:24px;font-size:13px;color:var(--text-2);">
+      <a href="#" class="hover:text-white transition-colors">Privacy</a>
+      <a href="#" class="hover:text-white transition-colors">Terms</a>
+      <a href="mailto:support@salesbot.ai" class="hover:text-white transition-colors">support@salesbot.ai</a>
+    </div>
+    <div style="font-size:12px;color:var(--text-3);font-family:'IBM Plex Mono',monospace;">© 2026 SalesBot AI. All rights reserved.</div>
+  </div>
+</footer>
+
+<script>
+  lucide.createIcons();
+
+  // Ticker
+  const tickerItems = [
+    "New order: SoundX Pro — $89", "Conversion rate: 87%",
+    "Active chats: 1,247", "Revenue today: $14,320",
+    "New lead captured in Casablanca", "Order confirmed via WhatsApp",
+    "AI handled 2,400 messages today", "New store registered in Lagos",
+    "Top product: Wireless Earbuds — 48 sold", "Platform uptime: 99.97%",
+  ];
+  const inner = document.getElementById("ticker");
+  const doubled = [...tickerItems, ...tickerItems];
+  inner.innerHTML = doubled.map(t =>
+    `<div class="ticker-item"><span class="ticker-dot"></span>${t}</div>`
+  ).join("");
+
+  // Claimed counter animation
+  let count = 347;
+  setInterval(() => {
+    if (count < 499) {
+      count += Math.random() < 0.3 ? 1 : 0;
+      document.getElementById("claimedCount").textContent = `${count} / 500 claimed`;
+    }
+  }, 8000);
+
+  // Intersection observer for fade-in
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.style.opacity = 1; });
+  }, { threshold: 0.1 });
+  document.querySelectorAll(".card-border").forEach(el => {
+    el.style.opacity = 0; el.style.transition = "opacity 0.6s ease";
+    io.observe(el);
+  });
+</script>
+</body>
+</html>
