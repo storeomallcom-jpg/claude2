@@ -1,0 +1,1473 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SalesBot AI — Chat Widget</title>
+
+<!-- Google Fonts: Syne + IBM Plex Mono + Inter -->
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+
+<!-- Lucide Icons -->
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   SALESBOT AI — CHAT WIDGET
+   Self-contained. Works as: (1) Floating overlay embed
+                              (2) Full-page iframe
+                              (3) Standalone demo page
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  --g: #00ff88;
+  --b: #00d4ff;
+  --r: #ff4466;
+  --y: #ffcc00;
+  --bg-0: #030508;
+  --bg-1: #080c12;
+  --bg-2: #0d1420;
+  --bg-3: #111b2e;
+  --bg-4: #172035;
+  --border: rgba(0,212,255,.13);
+  --border-g: rgba(0,255,136,.13);
+  --text-0: #f0f4ff;
+  --text-1: #8899bb;
+  --text-2: #445577;
+  --font-ui: 'Inter', sans-serif;
+  --font-brand: 'Syne', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --radius: 18px;
+  --radius-sm: 10px;
+  --shadow-g: 0 0 24px rgba(0,255,136,.18);
+  --shadow-b: 0 0 24px rgba(0,212,255,.18);
+  --bubble-size: 60px;
+  --panel-w: 400px;
+  --panel-h: 640px;
+  --anim: cubic-bezier(.16,1,.3,1);
+}
+
+/* Light mode overrides */
+[data-theme="light"] {
+  --bg-0: #f4f7ff;
+  --bg-1: #ffffff;
+  --bg-2: #eef2fb;
+  --bg-3: #e4eaf7;
+  --bg-4: #d8e0f0;
+  --border: rgba(0,100,200,.12);
+  --border-g: rgba(0,160,80,.15);
+  --text-0: #0d1020;
+  --text-1: #445577;
+  --text-2: #8899bb;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%; height: 100%;
+  background: transparent;
+  font-family: var(--font-ui);
+  overflow: hidden;
+}
+
+/* ── LAUNCHER BUBBLE ───────────────────────────────────────── */
+#sb-launcher {
+  position: fixed;
+  bottom: 24px; right: 24px;
+  width: var(--bubble-size); height: var(--bubble-size);
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--g), var(--b));
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 30px rgba(0,255,136,.4), 0 0 0 0 rgba(0,255,136,.4);
+  transition: transform .2s var(--anim), box-shadow .3s;
+  z-index: 99998;
+  animation: pulse-ring 3s ease-out infinite;
+}
+#sb-launcher:hover {
+  transform: scale(1.1);
+  box-shadow: 0 8px 40px rgba(0,255,136,.55), 0 0 0 0 rgba(0,255,136,.2);
+}
+#sb-launcher.open {
+  background: linear-gradient(135deg, var(--r), #ff6688);
+  animation: none;
+  box-shadow: 0 4px 20px rgba(255,68,102,.35);
+}
+#sb-launcher svg { width: 26px; height: 26px; color: #000; stroke-width: 2.2; }
+
+@keyframes pulse-ring {
+  0%  { box-shadow: 0 0 0 0 rgba(0,255,136,.4), 0 4px 30px rgba(0,255,136,.3); }
+  60% { box-shadow: 0 0 0 16px rgba(0,255,136,0), 0 4px 30px rgba(0,255,136,.3); }
+  100%{ box-shadow: 0 0 0 0 rgba(0,255,136,0), 0 4px 30px rgba(0,255,136,.3); }
+}
+
+/* Notification badge */
+#sb-badge {
+  position: absolute; top: -4px; right: -4px;
+  width: 20px; height: 20px;
+  background: var(--r);
+  border-radius: 50%;
+  font-family: var(--font-mono);
+  font-size: 10px; font-weight: 700;
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid var(--bg-0);
+  opacity: 0; transform: scale(0);
+  transition: opacity .2s, transform .3s var(--anim);
+}
+#sb-badge.show { opacity: 1; transform: scale(1); }
+
+/* ── CHAT PANEL ─────────────────────────────────────────────── */
+#sb-panel {
+  position: fixed;
+  bottom: calc(var(--bubble-size) + 36px);
+  right: 24px;
+  width: var(--panel-w);
+  height: var(--panel-h);
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  z-index: 99999;
+  opacity: 0;
+  transform: translateY(20px) scale(.97);
+  pointer-events: none;
+  transition: opacity .3s var(--anim), transform .35s var(--anim);
+  box-shadow: 0 32px 80px rgba(0,0,0,.6), 0 0 0 1px var(--border), inset 0 1px 0 rgba(255,255,255,.04);
+}
+#sb-panel.open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: all;
+}
+
+/* scan-line overlay */
+#sb-panel::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,.04) 3px, rgba(0,0,0,.04) 4px);
+  pointer-events: none; z-index: 0; border-radius: var(--radius);
+  opacity: .5;
+}
+
+/* ── PANEL HEADER ───────────────────────────────────────────── */
+#sb-header {
+  flex-shrink: 0;
+  padding: 16px 18px 14px;
+  background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg-1) 100%);
+  border-bottom: 1px solid var(--border);
+  position: relative; z-index: 1;
+  display: flex; align-items: center; gap: 12px;
+}
+
+.sb-avatar {
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--g), var(--b));
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+}
+.sb-avatar svg { width: 20px; height: 20px; color: #000; }
+.sb-avatar::after {
+  content: '';
+  position: absolute; bottom: 1px; right: 1px;
+  width: 10px; height: 10px;
+  background: #22dd66;
+  border-radius: 50%;
+  border: 2px solid var(--bg-1);
+}
+
+.sb-header-info { flex: 1; min-width: 0; }
+.sb-agent-name {
+  font-family: var(--font-brand);
+  font-size: 15px; font-weight: 700;
+  color: var(--text-0);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sb-agent-status {
+  font-size: 11px; color: #22dd66;
+  display: flex; align-items: center; gap: 5px;
+  font-family: var(--font-mono);
+}
+.sb-status-dot {
+  width: 6px; height: 6px;
+  background: #22dd66;
+  border-radius: 50%;
+  animation: blink 2s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+.sb-header-actions {
+  display: flex; gap: 6px; align-items: center;
+}
+.sb-icon-btn {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-3);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s, border-color .15s, transform .1s;
+  color: var(--text-1);
+}
+.sb-icon-btn:hover { background: var(--bg-4); border-color: var(--border-g); color: var(--g); transform: scale(1.05); }
+.sb-icon-btn svg { width: 15px; height: 15px; }
+
+/* Power tag */
+.sb-power-tag {
+  position: absolute;
+  bottom: -1px; left: 50%; transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 8px; font-weight: 500;
+  color: var(--text-2);
+  letter-spacing: .08em;
+  padding: 1px 8px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  white-space: nowrap;
+}
+
+/* ── MESSAGES AREA ──────────────────────────────────────────── */
+#sb-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 16px;
+  display: flex; flex-direction: column; gap: 10px;
+  position: relative; z-index: 1;
+  scroll-behavior: smooth;
+}
+
+#sb-messages::-webkit-scrollbar { width: 4px; }
+#sb-messages::-webkit-scrollbar-track { background: transparent; }
+#sb-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+#sb-messages::-webkit-scrollbar-thumb:hover { background: var(--text-2); }
+
+/* date divider */
+.sb-date-divider {
+  display: flex; align-items: center; gap: 10px;
+  margin: 4px 0;
+}
+.sb-date-divider span {
+  font-size: 10px; color: var(--text-2);
+  font-family: var(--font-mono);
+  white-space: nowrap; letter-spacing: .06em;
+}
+.sb-date-divider::before, .sb-date-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+/* message bubbles */
+.sb-msg {
+  display: flex; gap: 8px;
+  animation: msg-in .3s var(--anim) both;
+  max-width: 88%;
+}
+@keyframes msg-in {
+  from { opacity: 0; transform: translateY(10px) scale(.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.sb-msg.bot { align-self: flex-start; }
+.sb-msg.user { align-self: flex-end; flex-direction: row-reverse; }
+
+.sb-msg-avatar {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, var(--g), var(--b));
+  font-size: 12px; color: #000; font-weight: 700;
+  margin-top: 2px;
+}
+.sb-msg.user .sb-msg-avatar { background: var(--bg-4); color: var(--text-1); }
+
+.sb-bubble {
+  padding: 11px 14px;
+  border-radius: 16px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text-0);
+  max-width: 100%;
+  word-break: break-word;
+}
+.sb-msg.bot .sb-bubble {
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 4px;
+}
+.sb-msg.user .sb-bubble {
+  background: linear-gradient(135deg, rgba(0,255,136,.2), rgba(0,212,255,.15));
+  border: 1px solid rgba(0,255,136,.25);
+  border-bottom-right-radius: 4px;
+  color: var(--text-0);
+}
+
+.sb-bubble-time {
+  font-size: 10px;
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  margin-top: 3px;
+  text-align: right;
+}
+.sb-msg.bot .sb-bubble-time { text-align: left; }
+
+/* ── TYPING INDICATOR ───────────────────────────────────────── */
+#sb-typing {
+  display: flex; gap: 8px; align-items: flex-end;
+  align-self: flex-start;
+  opacity: 0; height: 0; overflow: hidden;
+  transition: opacity .2s, height .2s;
+}
+#sb-typing.show { opacity: 1; height: auto; }
+
+.sb-typing-bubble {
+  padding: 12px 16px;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 16px; border-bottom-left-radius: 4px;
+  display: flex; align-items: center; gap: 5px;
+}
+.sb-dot {
+  width: 6px; height: 6px;
+  background: var(--text-2);
+  border-radius: 50%;
+  animation: dot-bounce 1.3s ease-in-out infinite;
+}
+.sb-dot:nth-child(2) { animation-delay: .15s; }
+.sb-dot:nth-child(3) { animation-delay: .3s; }
+@keyframes dot-bounce {
+  0%,100% { transform: translateY(0); background: var(--text-2); }
+  50%     { transform: translateY(-5px); background: var(--g); }
+}
+
+/* ── QUICK REPLIES ──────────────────────────────────────────── */
+#sb-quick-replies {
+  padding: 0 16px 12px;
+  display: flex; gap: 8px; flex-wrap: wrap;
+  position: relative; z-index: 1;
+  transition: opacity .2s;
+}
+.sb-quick-btn {
+  padding: 6px 13px;
+  border-radius: 20px;
+  border: 1px solid var(--border-g);
+  background: rgba(0,255,136,.07);
+  color: var(--g);
+  font-size: 12px; font-family: var(--font-mono);
+  cursor: pointer;
+  transition: background .15s, transform .1s;
+  white-space: nowrap;
+}
+.sb-quick-btn:hover {
+  background: rgba(0,255,136,.15);
+  transform: translateY(-1px);
+}
+
+/* ── LEAD CAPTURE CARD ──────────────────────────────────────── */
+.sb-lead-card {
+  background: var(--bg-2);
+  border: 1px solid var(--border-g);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  margin: 4px 0;
+  position: relative;
+  overflow: hidden;
+}
+.sb-lead-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--g), var(--b));
+}
+.sb-lead-card-title {
+  font-family: var(--font-brand);
+  font-size: 13px; font-weight: 700;
+  color: var(--g);
+  margin-bottom: 10px;
+  display: flex; align-items: center; gap: 7px;
+}
+.sb-lead-card-title svg { width: 14px; height: 14px; }
+.sb-lead-input {
+  width: 100%;
+  background: var(--bg-0);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 12px;
+  color: var(--text-0);
+  font-size: 13px;
+  font-family: var(--font-ui);
+  outline: none;
+  transition: border-color .2s;
+  margin-bottom: 8px;
+}
+.sb-lead-input:focus { border-color: var(--g); }
+.sb-lead-input::placeholder { color: var(--text-2); }
+.sb-lead-submit {
+  width: 100%;
+  padding: 9px;
+  background: linear-gradient(135deg, var(--g), var(--b));
+  border: none; border-radius: 8px;
+  color: #000; font-weight: 700; font-size: 13px;
+  cursor: pointer;
+  font-family: var(--font-brand);
+  transition: opacity .15s, transform .1s;
+}
+.sb-lead-submit:hover { opacity: .9; transform: translateY(-1px); }
+
+/* ── ORDER CONFIRM CARD ─────────────────────────────────────── */
+.sb-order-card {
+  background: var(--bg-2);
+  border: 1px solid rgba(0,255,136,.3);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  position: relative; overflow: hidden;
+}
+.sb-order-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--g), #00ff88aa);
+}
+.sb-order-row {
+  display: flex; justify-content: space-between;
+  font-size: 12.5px; color: var(--text-1);
+  margin-bottom: 5px;
+}
+.sb-order-row strong { color: var(--text-0); }
+.sb-order-total {
+  border-top: 1px solid var(--border);
+  padding-top: 8px; margin-top: 8px;
+  font-family: var(--font-brand);
+  font-size: 15px; font-weight: 700;
+  color: var(--g);
+  display: flex; justify-content: space-between;
+}
+.sb-order-actions { display: flex; gap: 8px; margin-top: 10px; }
+.sb-btn-confirm {
+  flex: 1; padding: 9px;
+  background: linear-gradient(135deg, var(--g), #00cc70);
+  border: none; border-radius: 8px;
+  color: #000; font-weight: 700; font-size: 12px;
+  cursor: pointer; font-family: var(--font-brand);
+  transition: opacity .15s;
+}
+.sb-btn-confirm:hover { opacity: .9; }
+.sb-btn-wa {
+  padding: 9px 14px;
+  background: #25d366;
+  border: none; border-radius: 8px;
+  color: #fff; font-weight: 700; font-size: 12px;
+  cursor: pointer; display: flex; align-items: center; gap: 5px;
+  transition: opacity .15s;
+}
+.sb-btn-wa:hover { opacity: .9; }
+.sb-btn-wa svg { width: 14px; height: 14px; }
+
+/* ── INPUT AREA ─────────────────────────────────────────────── */
+#sb-input-area {
+  flex-shrink: 0;
+  padding: 12px 14px;
+  background: var(--bg-2);
+  border-top: 1px solid var(--border);
+  position: relative; z-index: 1;
+  display: flex; align-items: flex-end; gap: 9px;
+}
+
+#sb-input-wrap {
+  flex: 1;
+  background: var(--bg-0);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  display: flex; align-items: flex-end;
+  transition: border-color .2s, box-shadow .2s;
+  overflow: hidden;
+}
+#sb-input-wrap:focus-within {
+  border-color: rgba(0,255,136,.4);
+  box-shadow: 0 0 0 3px rgba(0,255,136,.07);
+}
+
+#sb-input {
+  flex: 1;
+  background: transparent;
+  border: none; outline: none;
+  color: var(--text-0);
+  font-size: 13.5px;
+  font-family: var(--font-ui);
+  padding: 11px 12px;
+  resize: none;
+  max-height: 120px;
+  min-height: 42px;
+  line-height: 1.5;
+}
+#sb-input::placeholder { color: var(--text-2); }
+
+#sb-emoji-btn {
+  width: 36px; height: 36px;
+  margin: 3px;
+  border: none; background: transparent;
+  color: var(--text-2); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 8px;
+  transition: color .15s, background .15s;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+#sb-emoji-btn:hover { color: var(--y); background: var(--bg-3); }
+
+#sb-send-btn {
+  width: 42px; height: 42px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, var(--g), var(--b));
+  color: #000;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform .15s, opacity .15s;
+  flex-shrink: 0;
+}
+#sb-send-btn:hover { transform: scale(1.07); }
+#sb-send-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+#sb-send-btn svg { width: 18px; height: 18px; }
+
+/* ── FOOTER ─────────────────────────────────────────────────── */
+#sb-footer {
+  flex-shrink: 0;
+  padding: 7px 14px 9px;
+  background: var(--bg-2);
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  gap: 5px;
+  position: relative; z-index: 1;
+}
+#sb-footer span {
+  font-size: 10px; color: var(--text-2);
+  font-family: var(--font-mono);
+  letter-spacing: .04em;
+}
+#sb-footer a {
+  font-size: 10px; color: var(--g);
+  font-family: var(--font-mono);
+  text-decoration: none; font-weight: 600;
+}
+#sb-footer a:hover { text-decoration: underline; }
+
+/* ── EMOJI PICKER ───────────────────────────────────────────── */
+#sb-emoji-picker {
+  position: absolute;
+  bottom: calc(100% + 8px); right: 14px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px;
+  display: flex; flex-wrap: wrap; gap: 4px;
+  width: 240px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.5);
+  opacity: 0; transform: scale(.95) translateY(4px);
+  pointer-events: none;
+  transition: opacity .2s, transform .2s var(--anim);
+  z-index: 100;
+}
+#sb-emoji-picker.show { opacity: 1; transform: scale(1) translateY(0); pointer-events: all; }
+.sb-emoji {
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; border-radius: 6px; cursor: pointer;
+  transition: background .1s;
+}
+.sb-emoji:hover { background: var(--bg-4); }
+
+/* ── FULLPAGE DEMO WRAPPER ──────────────────────────────────── */
+#sb-demo-bg {
+  position: fixed; inset: 0;
+  background: var(--bg-0);
+  overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  z-index: -1;
+}
+#sb-demo-bg::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: 
+    radial-gradient(ellipse 60% 40% at 20% 30%, rgba(0,255,136,.06) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 40% at 80% 70%, rgba(0,212,255,.06) 0%, transparent 70%);
+}
+#sb-demo-bg::after {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: 
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: .5;
+}
+
+/* demo info panel */
+#sb-demo-info {
+  position: fixed;
+  bottom: 24px; left: 24px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px 20px;
+  max-width: 280px;
+  z-index: 99990;
+}
+#sb-demo-info h3 {
+  font-family: var(--font-brand);
+  font-size: 14px; font-weight: 800;
+  color: var(--text-0);
+  margin-bottom: 8px;
+  display: flex; align-items: center; gap: 8px;
+}
+#sb-demo-info h3 span { color: var(--g); }
+#sb-demo-info p {
+  font-size: 11.5px; color: var(--text-1);
+  line-height: 1.6; margin-bottom: 8px;
+}
+.sb-demo-param {
+  display: flex; justify-content: space-between;
+  font-size: 11px; font-family: var(--font-mono);
+  color: var(--text-2); margin-bottom: 3px;
+}
+.sb-demo-param span:last-child { color: var(--b); }
+
+/* ── EMBED CODE MODAL ───────────────────────────────────────── */
+#sb-embed-modal {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.75);
+  backdrop-filter: blur(8px);
+  z-index: 999999;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity .2s;
+}
+#sb-embed-modal.show { opacity: 1; pointer-events: all; }
+#sb-embed-card {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  max-width: 500px; width: 90%;
+  transform: translateY(20px);
+  transition: transform .3s var(--anim);
+}
+#sb-embed-modal.show #sb-embed-card { transform: translateY(0); }
+#sb-embed-card h3 {
+  font-family: var(--font-brand); font-size: 18px; font-weight: 800;
+  color: var(--text-0); margin-bottom: 6px;
+}
+#sb-embed-card p { font-size: 13px; color: var(--text-1); margin-bottom: 18px; }
+.sb-code-block {
+  background: var(--bg-0);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--g);
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin-bottom: 12px;
+  line-height: 1.6;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.sb-copy-btn {
+  width: 100%; padding: 11px;
+  background: linear-gradient(135deg, var(--g), var(--b));
+  border: none; border-radius: 10px;
+  color: #000; font-weight: 700; font-size: 13px;
+  cursor: pointer; font-family: var(--font-brand);
+  transition: opacity .15s;
+  margin-bottom: 8px;
+}
+.sb-copy-btn:hover { opacity: .9; }
+.sb-modal-close {
+  width: 100%; padding: 10px;
+  background: transparent; border: 1px solid var(--border);
+  border-radius: 10px; color: var(--text-1);
+  font-size: 13px; cursor: pointer;
+  transition: background .15s;
+}
+.sb-modal-close:hover { background: var(--bg-3); }
+
+/* ── RTL SUPPORT ────────────────────────────────────────────── */
+[dir="rtl"] #sb-launcher { right: auto; left: 24px; }
+[dir="rtl"] #sb-panel { right: auto; left: 24px; }
+[dir="rtl"] .sb-msg.user { flex-direction: row; }
+[dir="rtl"] .sb-msg.bot { flex-direction: row-reverse; }
+[dir="rtl"] .sb-msg.bot .sb-bubble { border-bottom-left-radius: 16px; border-bottom-right-radius: 4px; }
+[dir="rtl"] .sb-msg.user .sb-bubble { border-bottom-right-radius: 16px; border-bottom-left-radius: 4px; }
+[dir="rtl"] .sb-bubble-time { text-align: left; }
+[dir="rtl"] .sb-msg.bot .sb-bubble-time { text-align: right; }
+[dir="rtl"] #sb-emoji-picker { right: auto; left: 14px; }
+[dir="rtl"] #sb-demo-info { left: auto; right: 24px; }
+
+/* ── MOBILE ─────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  :root { --panel-w: 100vw; --panel-h: 100dvh; }
+  #sb-panel {
+    bottom: 0; right: 0; left: 0;
+    border-radius: var(--radius) var(--radius) 0 0;
+    width: 100%; height: 92dvh;
+  }
+  [dir="rtl"] #sb-panel { right: 0; left: 0; }
+  #sb-demo-info { display: none; }
+  #sb-launcher { bottom: 16px; right: 16px; }
+}
+
+/* ── SOUND TOGGLE ───────────────────────────────────────────── */
+.sb-icon-btn.sound-on { color: var(--g); border-color: var(--border-g); }
+
+/* ── ALERT TOAST ────────────────────────────────────────────── */
+#sb-toast {
+  position: fixed;
+  bottom: 100px; right: 24px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-g);
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 12.5px; color: var(--text-0);
+  font-family: var(--font-mono);
+  box-shadow: 0 8px 24px rgba(0,0,0,.5);
+  z-index: 999997;
+  opacity: 0; transform: translateX(20px);
+  transition: opacity .2s, transform .3s var(--anim);
+  pointer-events: none;
+  display: flex; align-items: center; gap: 8px;
+}
+#sb-toast.show { opacity: 1; transform: translateX(0); }
+#sb-toast svg { width: 14px; height: 14px; color: var(--g); flex-shrink: 0; }
+
+/* ── PRODUCT CHIPS (in messages) ────────────────────────────── */
+.sb-product-chips {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;
+}
+.sb-product-chip {
+  background: var(--bg-4);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.sb-product-chip:hover { border-color: var(--g); background: rgba(0,255,136,.07); }
+.sb-product-chip-name { font-weight: 600; color: var(--text-0); }
+.sb-product-chip-price { color: var(--g); font-family: var(--font-mono); font-size: 11px; }
+
+/* theme transition */
+* { transition-property: background-color, border-color, color; transition-duration: .3s; }
+.sb-bubble, #sb-header, #sb-input, #sb-send-btn, #sb-launcher,
+.sb-icon-btn, #sb-messages, #sb-input-area, #sb-footer, #sb-panel {
+  transition: all .3s var(--anim);
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════ DEMO BACKGROUND ════════════ -->
+<div id="sb-demo-bg"></div>
+<div id="sb-demo-info">
+  <h3><span>SalesBot AI</span> — Widget Demo</h3>
+  <p>This is the embeddable customer chat widget. Click the bubble to launch.</p>
+  <div class="sb-demo-param"><span>Store</span><span id="dp-store">Demo Store</span></div>
+  <div class="sb-demo-param"><span>Agent</span><span id="dp-agent">Professional</span></div>
+  <div class="sb-demo-param"><span>Lang</span><span id="dp-lang">English (LTR)</span></div>
+  <div class="sb-demo-param"><span>Products</span><span id="dp-products">5 items</span></div>
+</div>
+
+<!-- ════════════════════════════ TOAST ═════════════════════════ -->
+<div id="sb-toast">
+  <svg id="sb-toast-icon"></svg>
+  <span id="sb-toast-msg"></span>
+</div>
+
+<!-- ════════════════════════════ LAUNCHER ══════════════════════ -->
+<div id="sb-launcher" onclick="SBWidget.toggle()" title="Chat with us">
+  <div id="sb-badge">1</div>
+  <svg id="sb-launcher-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+  </svg>
+</div>
+
+<!-- ════════════════════════════ PANEL ═════════════════════════ -->
+<div id="sb-panel">
+
+  <!-- HEADER -->
+  <div id="sb-header">
+    <div class="sb-avatar">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+    </div>
+    <div class="sb-header-info">
+      <div class="sb-agent-name" id="sb-agent-name">SalesBot AI</div>
+      <div class="sb-agent-status"><div class="sb-status-dot"></div><span id="sb-status-text">Online · Replies instantly</span></div>
+    </div>
+    <div class="sb-header-actions">
+      <button class="sb-icon-btn" id="sb-theme-btn" onclick="SBWidget.toggleTheme()" title="Toggle theme">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      </button>
+      <button class="sb-icon-btn" id="sb-sound-btn" onclick="SBWidget.toggleSound()" title="Toggle sound">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+      </button>
+      <button class="sb-icon-btn" id="sb-embed-btn" onclick="SBWidget.showEmbed()" title="Get embed code">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      </button>
+      <button class="sb-icon-btn" onclick="SBWidget.toggle()" title="Close">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="sb-power-tag">POWERED BY SALESBOT AI</div>
+  </div>
+
+  <!-- MESSAGES -->
+  <div id="sb-messages">
+    <div class="sb-date-divider">
+      <span id="sb-date-label">TODAY</span>
+    </div>
+    <!-- messages injected here -->
+    <div id="sb-typing" style="display:flex; opacity:0; height:0; overflow:hidden;">
+      <div class="sb-msg-avatar" style="background:linear-gradient(135deg,var(--g),var(--b));color:#000;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;font-weight:700;margin-top:2px;">AI</div>
+      <div class="sb-typing-bubble">
+        <div class="sb-dot"></div>
+        <div class="sb-dot"></div>
+        <div class="sb-dot"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUICK REPLIES -->
+  <div id="sb-quick-replies"></div>
+
+  <!-- INPUT -->
+  <div id="sb-input-area">
+    <div id="sb-input-wrap">
+      <textarea id="sb-input" placeholder="Type a message..." rows="1" maxlength="1000"></textarea>
+      <button id="sb-emoji-btn" onclick="SBWidget.toggleEmoji()" title="Emoji">😊</button>
+    </div>
+    <button id="sb-send-btn" onclick="SBWidget.sendMessage()" title="Send">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+    <!-- Emoji picker -->
+    <div id="sb-emoji-picker">
+      <!-- populated by JS -->
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div id="sb-footer">
+    <span>🔒 Secure ·</span>
+    <a href="https://salesbot.ai" target="_blank">SalesBot AI</a>
+    <span>· v2.0</span>
+  </div>
+
+</div><!-- /sb-panel -->
+
+<!-- ════════════════════════ EMBED MODAL ══════════════════════ -->
+<div id="sb-embed-modal" onclick="if(event.target===this)SBWidget.hideEmbed()">
+  <div id="sb-embed-card">
+    <h3>🔌 Embed This Widget</h3>
+    <p>Paste this snippet before the <code>&lt;/body&gt;</code> tag on your website.</p>
+    <div class="sb-code-block" id="sb-embed-code"></div>
+    <button class="sb-copy-btn" onclick="SBWidget.copyEmbed()">📋 Copy Embed Code</button>
+    <button class="sb-modal-close" onclick="SBWidget.hideEmbed()">Close</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════ SCRIPTS ═══════════════════════ -->
+<script>
+// ═══════════════════════════════════════════════════════════════
+// SALESBOT AI — CHAT WIDGET ENGINE
+// ═══════════════════════════════════════════════════════════════
+
+const SBWidget = (() => {
+
+  // ── Config: read from URL params or defaults ───────────────
+  const params = new URLSearchParams(window.location.search);
+
+  const CFG = {
+    storeId    : params.get('store_id')    || 'demo',
+    storeName  : params.get('store_name')  || 'SalesBot Demo Store',
+    personality: params.get('personality') || 'friendly',
+    currency   : params.get('currency')    || 'USD',
+    language   : params.get('language')    || 'en',
+    waNumber   : params.get('wa')          || '',
+    accentColor: params.get('accent')      || '#00ff88',
+    groqKey    : params.get('groq_key')    || '',  // Supplied by embed
+    theme      : params.get('theme')       || 'dark',
+    autoOpen   : params.get('auto_open')   === '1',
+  };
+
+  // ── Mock product catalogue (replaced by real Supabase fetch) ─
+  const DEMO_PRODUCTS = [
+    { name: 'Pro Wireless Headphones', price: 149, stock: 24, description: 'Active noise cancellation, 40h battery, studio-grade sound' },
+    { name: 'Ergonomic Desk Chair',    price: 299, stock: 8,  description: 'Lumbar support, adjustable armrests, breathable mesh' },
+    { name: 'Smart Desk Lamp',         price: 59,  stock: 45, description: 'LED, touch dimmer, USB charging port, 5000K daylight' },
+    { name: 'Mechanical Keyboard',     price: 89,  stock: 17, description: 'TKL layout, cherry MX switches, white backlight' },
+    { name: '4K Webcam',               price: 119, stock: 0,  description: 'Auto-focus, ring light, wide-angle, plug & play' },
+  ];
+
+  const CURRENCY_SYMBOLS = { USD:'$',EUR:'€',GBP:'£',SAR:'﷼',AED:'د.إ',MAD:'درهم',EGP:'ج.م',NGN:'₦',KES:'KSh',ZAR:'R',INR:'₹',BRL:'R$',CAD:'CA$',AUD:'A$',JPY:'¥' };
+  const sym = CURRENCY_SYMBOLS[CFG.currency] || CFG.currency;
+
+  const RTL_LANGS = ['ar','he','fa','ur'];
+
+  const AI_PERSONALITIES = {
+    professional: 'Maintain a formal and precise tone. Build trust through expertise and data. Be concise.',
+    friendly: 'Be warm, enthusiastic, and approachable. Use light humour. Feel like a knowledgeable friend.',
+    aggressive: 'Use proven sales techniques. Create urgency with scarcity. Firmly handle objections and always drive toward closing.',
+  };
+
+  const QUICK_REPLIES_INIT = [
+    'Show me your products 🛍️',
+    'What\'s on sale? 🔥',
+    'Shipping info 🚚',
+    'I need help choosing',
+  ];
+
+  const EMOJIS = ['😊','👍','🔥','💯','🛍️','✅','❤️','😍','🤔','💬','🚀','⭐','🙌','💎','🎁','💸','😂','👋','🤝','💪'];
+
+  // ── State ──────────────────────────────────────────────────
+  let isOpen        = false;
+  let isSoundOn     = true;
+  let isTyping      = false;
+  let conversationHistory = [];
+  let capturedLead  = null;
+  let sessionId     = generateId();
+  let messageCount  = 0;
+  let emojiOpen     = false;
+
+  // Groq key rotation pool
+  let groqKeys = CFG.groqKey ? [CFG.groqKey] : [];
+  const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+  const GROQ_MODEL = 'llama3-70b-8192';
+  let keyIndex = 0;
+  const keyCooldowns = {};
+
+  function getNextKey() {
+    if (!groqKeys.length) return null;
+    const now = Date.now();
+    for (let i = 0; i < groqKeys.length; i++) {
+      const idx = (keyIndex + i) % groqKeys.length;
+      const k = groqKeys[idx];
+      if (now >= (keyCooldowns[k] || 0)) {
+        keyIndex = (idx + 1) % groqKeys.length;
+        return k;
+      }
+    }
+    return groqKeys[keyIndex % groqKeys.length];
+  }
+
+  function markKeyFailed(k) {
+    keyCooldowns[k] = Date.now() + 60_000;
+  }
+
+  function generateId() {
+    return Math.random().toString(36).slice(2, 10);
+  }
+
+  // ── System prompt ──────────────────────────────────────────
+  function buildSystemPrompt() {
+    const avail = DEMO_PRODUCTS.filter(p => p.stock > 0);
+    const oos   = DEMO_PRODUCTS.filter(p => p.stock === 0);
+    const pList = DEMO_PRODUCTS.map(p =>
+      `• ${p.name}: ${sym}${p.price} | Stock: ${p.stock > 0 ? p.stock + ' available' : '⚠️ OUT OF STOCK'} | ${p.description}`
+    ).join('\n');
+
+    const pDir = AI_PERSONALITIES[CFG.personality] || AI_PERSONALITIES.friendly;
+
+    return `You are an elite AI Sales Agent for "${CFG.storeName}".
+Your name is Alex. You are helpful, knowledgeable, and persuasive.
+
+MISSION: Convert every visitor into a customer. Capture their Name + Email or Phone naturally in conversation.
+
+STORE RULES
+───────────
+Currency   : ${CFG.currency} (${sym})
+Delivery   : 3–5 business days
+Returns    : 30-day hassle-free returns
+Discounts  : Use code WELCOME10 for 10% off first order
+
+PRODUCT CATALOGUE
+─────────────────
+${pList}
+
+SALES PROCESS
+─────────────
+1. Greet warmly – identify the customer's need in ≤2 sentences.
+2. Recommend the best-fit product with specific details and enthusiasm.
+3. Address objections naturally: price, quality, delivery time, trust.
+4. When the customer shows interest → ask for their name first, then email or WhatsApp number.
+5. Confirm order details and tell them what happens next.
+6. Out-of-stock items → suggest alternatives + offer to notify when restocked.
+
+LANGUAGE: Auto-detect and mirror the customer's language. Be fluent.
+CURRENCY: Always quote in ${CFG.currency} (${sym}).
+LENGTH: Keep replies concise (2–4 sentences). Use ✅ / 🔥 / 👋 sparingly for warmth.
+
+LEAD CAPTURE — CRITICAL (internal, never show raw JSON)
+When you have captured name + email or phone, append EXACTLY this at the end of your message (invisible to customer):
+[[LEAD:{"name":"...","contact":"...","product":"...","price":0}]]
+
+PERSONALITY DIRECTIVE
+${pDir}`;
+  }
+
+  // ── Groq API call ──────────────────────────────────────────
+  async function askGroq(userMessage) {
+    const key = getNextKey();
+    if (!key) {
+      // No key — use canned demo responses
+      return getDemoResponse(userMessage);
+    }
+
+    conversationHistory.push({ role: 'user', content: userMessage });
+
+    const payload = {
+      model: GROQ_MODEL,
+      temperature: 0.75,
+      max_tokens: 512,
+      messages: [
+        { role: 'system', content: buildSystemPrompt() },
+        ...conversationHistory.slice(-20),   // keep last 20 turns
+      ],
+    };
+
+    let attempts = 0;
+    while (attempts < groqKeys.length) {
+      const currentKey = getNextKey();
+      try {
+        const res = await fetch(GROQ_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentKey}` },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) { markKeyFailed(currentKey); attempts++; continue; }
+        const data = await res.json();
+        const reply = data.choices?.[0]?.message?.content || "I'm having trouble responding right now. Please try again!";
+        conversationHistory.push({ role: 'assistant', content: reply });
+        return reply;
+      } catch {
+        markKeyFailed(currentKey);
+        attempts++;
+      }
+    }
+    return getDemoResponse(userMessage);
+  }
+
+  // ── Demo responses (no API key) ────────────────────────────
+  const DEMO_RESPONSES = [
+    `Hey there! 👋 Welcome to **${CFG.storeName}**! I'm Alex, your personal shopping assistant. What are you looking for today? I'd love to help you find the perfect product!`,
+    `Great question! Our bestseller right now is the **Pro Wireless Headphones** at ${sym}149 — active noise cancellation, 40-hour battery life, and studio-grade sound. Customers absolutely love them! 🔥 Want to know more?`,
+    `Absolutely! We offer free shipping on orders over ${sym}50, and delivery takes 3–5 business days. Plus, you get a 30-day hassle-free return policy. 😊`,
+    `I hear you — that's a valid concern! All our products come with a full manufacturer warranty. We've served thousands of happy customers. May I ask your name so I can personalize recommendations for you?`,
+    `Perfect! And what's the best way to reach you — email or WhatsApp? I'll send you the order confirmation and tracking link right away. ✅`,
+  ];
+  let demoIdx = 0;
+  function getDemoResponse(msg) {
+    const lc = msg.toLowerCase();
+    if (lc.includes('product') || lc.includes('show') || lc.includes('catalogue')) {
+      return DEMO_RESPONSES[1];
+    }
+    if (lc.includes('ship') || lc.includes('deliver') || lc.includes('return')) {
+      return DEMO_RESPONSES[2];
+    }
+    if (lc.includes('trust') || lc.includes('real') || lc.includes('legit')) {
+      return DEMO_RESPONSES[3];
+    }
+    const r = DEMO_RESPONSES[demoIdx % DEMO_RESPONSES.length];
+    demoIdx++;
+    return r;
+  }
+
+  // ── Extract and handle lead ────────────────────────────────
+  function extractLead(text) {
+    const m = text.match(/\[\[LEAD:(.*?)\]\]/s);
+    if (!m) return null;
+    try { return JSON.parse(m[1]); } catch { return null; }
+  }
+
+  function cleanText(text) {
+    return text.replace(/\[\[LEAD:.*?\]\]/gs, '').trim();
+  }
+
+  function handleLead(lead) {
+    if (!lead || capturedLead) return;
+    capturedLead = lead;
+    console.log('[SalesBot] Lead captured:', lead);
+    // In production: POST to Supabase leads_orders table
+    // await fetch(SUPABASE_URL + '/rest/v1/leads_orders', { method: 'POST', ... })
+    showToast('✅ Lead captured successfully');
+
+    // Show order confirmation card
+    if (lead.product && lead.price > 0) {
+      showOrderCard(lead);
+    }
+  }
+
+  // ── DOM helpers ────────────────────────────────────────────
+  function el(id) { return document.getElementById(id); }
+
+  function getTime() {
+    return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function addMessage(text, role = 'bot') {
+    const msgs = el('sb-messages');
+    const typing = el('sb-typing');
+
+    const wrap = document.createElement('div');
+    wrap.className = `sb-msg ${role}`;
+
+    const initials = role === 'bot' ? 'AI' : '👤';
+    const avatarBg = role === 'bot'
+      ? 'background:linear-gradient(135deg,var(--g),var(--b));color:#000;'
+      : 'background:var(--bg-4);color:var(--text-1);';
+
+    wrap.innerHTML = `
+      <div class="sb-msg-avatar" style="${avatarBg}">${initials}</div>
+      <div>
+        <div class="sb-bubble">${formatText(text)}</div>
+        <div class="sb-bubble-time">${getTime()}</div>
+      </div>`;
+
+    msgs.insertBefore(wrap, typing);
+    scrollBottom();
+    messageCount++;
+
+    if (role === 'bot' && isSoundOn) playSound('receive');
+    if (role === 'user' && isSoundOn) playSound('send');
+
+    return wrap;
+  }
+
+  function formatText(text) {
+    return text
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/`(.*?)`/g, '<code style="background:var(--bg-4);padding:1px 5px;border-radius:4px;font-family:var(--font-mono);font-size:12px;">$1</code>')
+      .replace(/\n/g, '<br>');
+  }
+
+  function showTyping() {
+    const t = el('sb-typing');
+    t.style.display = 'flex';
+    setTimeout(() => { t.style.opacity = '1'; t.style.height = 'auto'; t.style.overflow = 'visible'; }, 10);
+    scrollBottom();
+  }
+
+  function hideTyping() {
+    const t = el('sb-typing');
+    t.style.opacity = '0';
+    t.style.height = '0';
+    t.style.overflow = 'hidden';
+    setTimeout(() => { t.style.display = 'flex'; }, 300);
+  }
+
+  function scrollBottom() {
+    const m = el('sb-messages');
+    m.scrollTop = m.scrollHeight;
+  }
+
+  function setQuickReplies(items) {
+    const qr = el('sb-quick-replies');
+    qr.innerHTML = '';
+    items.forEach(text => {
+      const btn = document.createElement('button');
+      btn.className = 'sb-quick-btn';
+      btn.textContent = text;
+      btn.onclick = () => { sendText(text); qr.innerHTML = ''; };
+      qr.appendChild(btn);
+    });
+  }
+
+  function showOrderCard(lead) {
+    const msgs = el('sb-messages');
+    const typing = el('sb-typing');
+    const card = document.createElement('div');
+    card.className = 'sb-order-card sb-msg bot';
+    card.innerHTML = `
+      <div style="font-family:var(--font-brand);font-size:13px;font-weight:800;color:var(--g);margin-bottom:12px;display:flex;align-items:center;gap:7px;">
+        🛒 Order Summary
+      </div>
+      <div class="sb-order-row"><span>Product</span><strong>${lead.product || 'Selected Item'}</strong></div>
+      <div class="sb-order-row"><span>Customer</span><strong>${lead.name || '—'}</strong></div>
+      <div class="sb-order-row"><span>Contact</span><strong>${lead.contact || '—'}</strong></div>
+      <div class="sb-order-row"><span>Delivery</span><strong>3–5 business days</strong></div>
+      <div class="sb-order-total"><span>Total</span><span>${sym}${lead.price || '—'}</span></div>
+      <div class="sb-order-actions">
+        <button class="sb-btn-confirm" onclick="SBWidget.confirmOrder()">✅ Confirm Order</button>
+        ${CFG.waNumber ? `<button class="sb-btn-wa" onclick="SBWidget.openWhatsApp()"><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='currentColor'><path d='M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z'/></svg>WhatsApp</button>` : ''}
+      </div>
+    `;
+    msgs.insertBefore(card, typing);
+    scrollBottom();
+  }
+
+  // ── Sound effects (AudioContext) ───────────────────────────
+  function playSound(type) {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      if (type === 'send') {
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.12);
+      } else {
+        osc.frequency.setValueAtTime(600, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.08);
+        gain.gain.setValueAtTime(0.06, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.15);
+      }
+    } catch {}
+  }
+
+  // ── Toast ──────────────────────────────────────────────────
+  let toastTimer;
+  function showToast(msg) {
+    const t = el('sb-toast');
+    el('sb-toast-msg').textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // ── RTL detection ──────────────────────────────────────────
+  function applyLanguage(lang) {
+    const isRTL = RTL_LANGS.includes(lang);
+    document.documentElement.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
+    document.documentElement.setAttribute('lang', lang);
+    el('dp-lang') && (el('dp-lang').textContent = isRTL ? `${lang.toUpperCase()} (RTL)` : `${lang.toUpperCase()} (LTR)`);
+  }
+
+  // ── Send message ───────────────────────────────────────────
+  async function sendMessage() {
+    const input = el('sb-input');
+    const text = input.value.trim();
+    if (!text || isTyping) return;
+    sendText(text);
+    input.value = '';
+    input.style.height = 'auto';
+  }
+
+  async function sendText(text) {
+    if (isTyping) return;
+    el('sb-quick-replies').innerHTML = '';
+    addMessage(text, 'user');
+    isTyping = true;
+    el('sb-send-btn').disabled = true;
+
+    // Simulate typing delay
+    const delay = 600 + Math.random() * 1000;
+    showTyping();
+    await new Promise(r => setTimeout(r, delay));
+
+    const raw = await askGroq(text);
+    hideTyping();
+
+    const lead = extractLead(raw);
+    const clean = cleanText(raw);
+
+    addMessage(clean, 'bot');
+    handleLead(lead);
+
+    isTyping = false;
+    el('sb-send-btn').disabled = false;
+    el('sb-input').focus();
+  }
+
+  // ── Public API ─────────────────────────────────────────────
+  function toggle() {
+    isOpen = !isOpen;
+    const panel = el('sb-panel');
+    const launcher = el('sb-launcher');
+    const badge = el('sb-badge');
+
+    if (isOpen) {
+      panel.classList.add('open');
+      launcher.classList.add('open');
+      badge.classList.remove('show');
+      // swap icon to X
+      launcher.querySelector('svg').innerHTML = '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>';
+      setTimeout(() => el('sb-input').focus(), 400);
+    } else {
+      panel.classList.remove('open');
+      launcher.classList.remove('open');
+      // swap icon back to chat
+      launcher.querySelector('svg').innerHTML = '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>';
+    }
+  }
+
+  function toggleTheme() {
+    const html = document.documentElement;
+    const isDark = html.getAttribute('data-theme') !== 'light';
+    html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    showToast(isDark ? '☀️ Light mode' : '🌙 Dark mode');
+  }
+
+  function toggleSound() {
+    isSoundOn = !isSoundOn;
+    const btn = el('sb-sound-btn');
+    btn.classList.toggle('sound-on', isSoundOn);
+    btn.title = isSoundOn ? 'Sound on' : 'Sound off';
+    showToast(isSoundOn ? '🔊 Sound on' : '🔇 Sound off');
+    btn.innerHTML = isSoundOn
+      ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>`
+      : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>`;
+  }
+
+  function toggleEmoji() {
+    emojiOpen = !emojiOpen;
+    el('sb-emoji-picker').classList.toggle('show', emojiOpen);
+  }
+
+  function insertEmoji(e) {
+    const input = el('sb-input');
+    input.value += e;
+    input.focus();
+    emojiOpen = false;
+    el('sb-emoji-picker').classList.remove('show');
+  }
+
+  function confirmOrder() {
+    addMessage('🎉 Your order has been confirmed! You\'ll receive a tracking link via email within 24 hours. Thank you for shopping with us!', 'bot');
+    showToast('✅ Order confirmed!');
+  }
+
+  function openWhatsApp() {
+    const msg = encodeURIComponent(`Hi! I'd like to confirm my order from ${CFG.storeName}.`);
+    window.open(`https://wa.me/${CFG.waNumber.replace(/\D/g,'')}?text=${msg}`, '_blank');
+  }
+
+  function showEmbed() {
+    const storeId = CFG.storeId;
+    const code = `<!-- SalesBot AI Widget -->
+<script>
+  (function(w,d,s,c){
+    w.SalesBotConfig = {
+      store_id: '${storeId}',
+      store_name: '${CFG.storeName}',
+      personality: '${CFG.personality}',
+      currency: '${CFG.currency}',
+      language: '${CFG.language}',
+      groq_key: 'YOUR_GROQ_API_KEY',
+    };
+    var f = d.createElement('iframe');
+    f.src = 'https://salesbot.ai/chat.html?' + new URLSearchParams(w.SalesBotConfig);
+    f.style = 'position:fixed;bottom:0;right:0;width:0;height:0;border:0;z-index:99999';
+    f.id = 'sb-iframe';
+    d.body.appendChild(f);
+  })(window, document);
+<\/script>
+<!-- End SalesBot AI -->`;
+    el('sb-embed-code').textContent = code;
+    el('sb-embed-modal').classList.add('show');
+  }
+
+  function hideEmbed() {
+    el('sb-embed-modal').classList.remove('show');
+  }
+
+  function copyEmbed() {
+    navigator.clipboard.writeText(el('sb-embed-code').textContent)
+      .then(() => showToast('✅ Embed code copied!'))
+      .catch(() => showToast('⚠️ Copy manually from the box'));
+  }
+
+  // ── Init ───────────────────────────────────────────────────
+  function init() {
+    // Apply language/RTL
+    applyLanguage(CFG.language);
+
+    // Apply theme
+    if (CFG.theme === 'light') document.documentElement.setAttribute('data-theme', 'light');
+
+    // Demo info panel
+    el('dp-store') && (el('dp-store').textContent = CFG.storeName);
+    el('dp-agent') && (el('dp-agent').textContent = CFG.personality.charAt(0).toUpperCase() + CFG.personality.slice(1));
+    el('dp-products') && (el('dp-products').textContent = `${DEMO_PRODUCTS.length} items`);
+
+    // Agent name
+    el('sb-agent-name').textContent = CFG.storeName;
+
+    // Date label
+    el('sb-date-label').textContent = new Date().toLocaleDateString([], { weekday:'short', month:'short', day:'numeric' }).toUpperCase();
+
+    // Emoji picker
+    const picker = el('sb-emoji-picker');
+    EMOJIS.forEach(e => {
+      const span = document.createElement('div');
+      span.className = 'sb-emoji';
+      span.textContent = e;
+      span.onclick = () => insertEmoji(e);
+      picker.appendChild(span);
+    });
+
+    // Close emoji on outside click
+    document.addEventListener('click', (ev) => {
+      if (!ev.target.closest('#sb-emoji-picker') && !ev.target.closest('#sb-emoji-btn')) {
+        emojiOpen = false;
+        el('sb-emoji-picker').classList.remove('show');
+      }
+    });
+
+    // Auto-resize textarea
+    el('sb-input').addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+
+    // Send on Enter (Shift+Enter for newline)
+    el('sb-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // Show notification badge after 3s
+    setTimeout(() => el('sb-badge').classList.add('show'), 3000);
+
+    // Send greeting after short delay
+    setTimeout(() => {
+      addMessage(`👋 Hey there! Welcome to **${CFG.storeName}**! I'm Alex, your AI shopping assistant. How can I help you today?`, 'bot');
+      setTimeout(() => setQuickReplies(QUICK_REPLIES_INIT), 500);
+    }, 800);
+
+    // Auto-open if requested
+    if (CFG.autoOpen) setTimeout(() => toggle(), 1200);
+
+    // Expose Groq key setter (for runtime injection)
+    window.SalesBotSetKeys = (keys) => {
+      groqKeys = Array.isArray(keys) ? keys : [keys];
+      showToast('🔑 API key updated');
+    };
+  }
+
+  // Wait for DOM
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  return { toggle, toggleTheme, toggleSound, toggleEmoji, sendMessage, sendText, confirmOrder, openWhatsApp, showEmbed, hideEmbed, copyEmbed };
+
+})();
+</script>
+
+</body>
+</html>
