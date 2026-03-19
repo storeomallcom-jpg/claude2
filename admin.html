@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Admin Panel — SalesBot AI</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script src="config.js"></script>
+<style>
+:root{--neon-g:#00ff88;--neon-b:#00d4ff;--bg-0:#050a0f;--bg-1:#080f17;--bg-2:#0d1825;--bg-3:#111f30;--border:rgba(0,212,255,0.1);--text-1:#e8f4ff;--text-2:#7a9bb5;--text-3:#3d5a73;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:var(--bg-0);color:var(--text-1);min-height:100vh;}
+h1,h2,h3{font-family:'Syne',sans-serif;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+.card{background:var(--bg-2);border:1px solid var(--border);border-radius:12px;padding:20px;}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;font-family:'IBM Plex Mono',monospace;}
+.badge-green{background:rgba(0,255,136,0.1);color:var(--neon-g);border:1px solid rgba(0,255,136,0.2);}
+.badge-blue{background:rgba(0,212,255,0.1);color:var(--neon-b);border:1px solid rgba(0,212,255,0.2);}
+.badge-amber{background:rgba(251,191,36,0.1);color:#fbbf24;border:1px solid rgba(251,191,36,0.2);}
+.badge-red{background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.2);}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all 0.2s;font-family:'Syne',sans-serif;}
+.btn-primary{background:linear-gradient(135deg,var(--neon-g),#00c870);color:#050a0f;}
+.btn-primary:hover{box-shadow:0 4px 20px rgba(0,255,136,0.3);}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text-2);}
+.btn-outline:hover{border-color:var(--neon-b);color:var(--neon-b);}
+.data-table{width:100%;border-collapse:collapse;font-size:13px;}
+.data-table th{padding:10px 14px;text-align:left;font-size:10px;letter-spacing:1.5px;color:var(--text-3);font-family:'IBM Plex Mono',monospace;border-bottom:1px solid var(--border);font-weight:500;}
+.data-table td{padding:12px 14px;border-bottom:1px solid rgba(0,212,255,0.05);vertical-align:middle;}
+.data-table tr:last-child td{border-bottom:none;}
+.data-table tr:hover td{background:rgba(0,212,255,0.02);}
+.progress{height:3px;border-radius:99px;background:var(--bg-3);overflow:hidden;margin-top:6px;}
+.progress-fill{height:100%;border-radius:99px;transition:width 1.5s ease;}
+::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-thumb{background:var(--bg-3);border-radius:99px;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+@keyframes fade-in{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.fade-in{animation:fade-in 0.5s ease forwards;}
+</style>
+</head>
+<body>
+
+<!-- Top Nav -->
+<nav style="background:var(--bg-1);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:50;">
+  <div style="display:flex;align-items:center;gap:16px;">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div style="width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,#ff4444,#cc0000);display:flex;align-items:center;justify-content:center;">
+        <i data-lucide="shield" style="width:14px;height:14px;color:#fff;"></i>
+      </div>
+      <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px;">SalesBot<span style="color:var(--neon-g);">AI</span> <span style="color:#ef4444;font-size:11px;font-family:'IBM Plex Mono',monospace;border:1px solid rgba(239,68,68,0.3);padding:2px 8px;border-radius:4px;">SUPER ADMIN</span></span>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div style="display:flex;align-items:center;gap:6px;font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--neon-g);">
+      <span style="width:7px;height:7px;border-radius:50%;background:var(--neon-g);display:inline-block;animation:pulse 1.5s infinite;"></span>
+      All systems operational
+    </div>
+    <a href="dashboard.html" class="btn btn-outline" style="padding:7px 14px;font-size:12px;"><i data-lucide="arrow-left" style="width:13px;height:13px;"></i> Merchant View</a>
+  </div>
+</nav>
+
+<div style="max-width:1400px;margin:0 auto;padding:24px;">
+
+  <!-- Page Header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+    <div>
+      <h1 style="font-size:26px;font-weight:800;">Platform Command Center</h1>
+      <p style="color:var(--text-2);font-size:14px;margin-top:2px;">Global overview of all SalesBot AI stores and infrastructure</p>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-outline" onclick="refreshAll()"><i data-lucide="refresh-cw" style="width:14px;height:14px;"></i> Refresh</button>
+      <button class="btn btn-primary" onclick="exportReport()"><i data-lucide="download" style="width:14px;height:14px;"></i> Export Report</button>
+    </div>
+  </div>
+
+  <!-- Platform Stats -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:24px;">
+    <div class="card fade-in" style="text-align:center;">
+      <div style="font-size:11px;letter-spacing:1.5px;color:var(--text-3);margin-bottom:8px;font-family:'IBM Plex Mono',monospace;">TOTAL STORES</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:38px;color:var(--text-1);" id="p-stores">0</div>
+      <div style="font-size:11px;color:var(--neon-g);margin-top:4px;" id="p-stores-sub">Loading…</div>
+    </div>
+    <div class="card fade-in" style="text-align:center;animation-delay:0.1s">
+      <div style="font-size:11px;letter-spacing:1.5px;color:var(--text-3);margin-bottom:8px;font-family:'IBM Plex Mono',monospace;">PLATFORM REVENUE</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:38px;color:var(--neon-g);" id="p-revenue">$0</div>
+      <div style="font-size:11px;color:var(--neon-g);margin-top:4px;">AI-generated total</div>
+    </div>
+    <div class="card fade-in" style="text-align:center;animation-delay:0.2s">
+      <div style="font-size:11px;letter-spacing:1.5px;color:var(--text-3);margin-bottom:8px;font-family:'IBM Plex Mono',monospace;">TOTAL ORDERS</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:38px;color:var(--neon-b);" id="p-orders">0</div>
+      <div style="font-size:11px;color:var(--neon-b);margin-top:4px;">Confirmed globally</div>
+    </div>
+    <div class="card fade-in" style="text-align:center;animation-delay:0.3s">
+      <div style="font-size:11px;letter-spacing:1.5px;color:var(--text-3);margin-bottom:8px;font-family:'IBM Plex Mono',monospace;">API HEALTH</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:38px;" id="p-api-health" style="color:var(--neon-g);">100%</div>
+      <div style="font-size:11px;color:var(--text-2);margin-top:4px;" id="p-api-sub">All keys healthy</div>
+    </div>
+    <div class="card fade-in" style="text-align:center;animation-delay:0.4s">
+      <div style="font-size:11px;letter-spacing:1.5px;color:var(--text-3);margin-bottom:8px;font-family:'IBM Plex Mono',monospace;">ACTIVE CHATS</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:38px;color:#a78bfa;" id="p-chats">0</div>
+      <div style="font-size:11px;color:#a78bfa;margin-top:4px;">Across all stores</div>
+    </div>
+    <div class="card fade-in" style="text-align:center;animation-delay:0.5s">
+      <div style="font-size:11px;letter-spacing:1.5px;color:var(--text-3);margin-bottom:8px;font-family:'IBM Plex Mono',monospace;">TOKENS USED</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:38px;color:#fbbf24;" id="p-tokens">0M</div>
+      <div style="font-size:11px;color:#fbbf24;margin-top:4px;">This month</div>
+    </div>
+  </div>
+
+  <!-- Charts Row -->
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:24px;">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <h3 style="font-size:15px;font-weight:700;">Platform Revenue (30 Days)</h3>
+        <span class="badge badge-green">↑ 34% MoM</span>
+      </div>
+      <canvas id="platformRevenueChart" height="160"></canvas>
+    </div>
+    <div class="card">
+      <h3 style="font-size:15px;font-weight:700;margin-bottom:16px;">Store Distribution by Plan</h3>
+      <canvas id="planChart" height="160"></canvas>
+      <div id="planLegend" style="margin-top:12px;display:flex;flex-direction:column;gap:6px;"></div>
+    </div>
+  </div>
+
+  <!-- API Key Health Monitor -->
+  <div class="card" style="margin-bottom:24px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <h3 style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;">
+        <i data-lucide="activity" style="width:16px;height:16px;color:var(--neon-g);"></i>
+        API Key Health Monitor
+      </h3>
+      <button class="btn btn-outline" style="padding:6px 12px;font-size:12px;" onclick="refreshKeyStatus()">
+        <i data-lucide="refresh-cw" style="width:12px;height:12px;"></i> Check Keys
+      </button>
+    </div>
+    <div id="keyMonitor" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;"></div>
+
+    <!-- API Latency chart -->
+    <div style="margin-top:20px;border-top:1px solid var(--border);padding-top:20px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <h4 style="font-size:14px;font-weight:600;color:var(--text-2);">API Response Latency (last 24h)</h4>
+        <span class="mono" style="font-size:12px;color:var(--neon-g);" id="avgLatency">Avg: — ms</span>
+      </div>
+      <canvas id="latencyChart" height="80"></canvas>
+    </div>
+  </div>
+
+  <!-- All Stores Table -->
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:24px;">
+    <div style="padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+      <h3 style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;">
+        <i data-lucide="store" style="width:16px;height:16px;color:var(--neon-b);"></i>
+        Registered Stores
+      </h3>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <div style="position:relative;">
+          <i data-lucide="search" style="width:13px;height:13px;position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-3);"></i>
+          <input id="storeSearch" oninput="filterStores()" style="background:var(--bg-1);border:1px solid var(--border);border-radius:7px;padding:7px 12px 7px 30px;color:var(--text-1);font-size:13px;width:200px;outline:none;" placeholder="Search stores..."/>
+        </div>
+        <select id="planFilter" onchange="filterStores()" style="background:var(--bg-1);border:1px solid var(--border);border-radius:7px;padding:7px 12px;color:var(--text-1);font-size:12px;font-family:'IBM Plex Mono',monospace;outline:none;">
+          <option value="">All Plans</option>
+          <option value="free">Free</option>
+          <option value="pro">Pro</option>
+          <option value="enterprise">Enterprise</option>
+        </select>
+      </div>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>STORE</th><th>OWNER</th><th>PLAN</th><th>REVENUE</th>
+          <th>ORDERS</th><th>CONV. RATE</th><th>CHATS</th><th>STATUS</th><th>ACTIONS</th>
+        </tr>
+      </thead>
+      <tbody id="storesBody">
+        <tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-3);">Loading stores…</td></tr>
+      </tbody>
+    </table>
+    <div style="padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+      <span class="mono" style="font-size:12px;color:var(--text-2);" id="storesCount">— stores</span>
+      <div class="mono" style="font-size:12px;color:var(--text-3);">Last refreshed: <span id="storesRefreshed">—</span></div>
+    </div>
+  </div>
+
+  <!-- Recent Platform Events -->
+  <div class="card">
+    <h3 style="font-size:15px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+      <i data-lucide="rss" style="width:16px;height:16px;color:#a78bfa;"></i>
+      Platform Event Log
+    </h3>
+    <div id="eventLog" style="display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto;"></div>
+  </div>
+
+</div>
+
+<script>
+lucide.createIcons();
+
+// ── Mock Platform Data ───────────────────────────
+const MOCK_STORES = [
+  { id:"s1", name:"TechVault Store",    owner:"demo@salesbot.ai",   plan:"pro",        revenue:14320, orders:132, conv:87, chats:47, active:true,  industry:"Electronics", created:"2026-01-01" },
+  { id:"s2", name:"Fashion Hub",        owner:"sara@fashion.com",   plan:"pro",        revenue:8940,  orders:98,  conv:72, chats:23, active:true,  industry:"Fashion",     created:"2026-01-03" },
+  { id:"s3", name:"MedSupply Africa",   owner:"kwame@medsupply.ng", plan:"enterprise", revenue:42100, orders:489, conv:91, chats:112,active:true,  industry:"Health",      created:"2025-12-15" },
+  { id:"s4", name:"Casa Organica",      owner:"sofia@casa.es",      plan:"free",       revenue:620,   orders:14,  conv:58, chats:8,  active:true,  industry:"Food",        created:"2026-01-10" },
+  { id:"s5", name:"GadgetZone KSA",     owner:"ali@gadget.sa",      plan:"pro",        revenue:19800, orders:201, conv:83, chats:61, active:true,  industry:"Electronics", created:"2025-12-20" },
+  { id:"s6", name:"BioFarm Morocco",    owner:"youssef@biofarm.ma", plan:"free",       revenue:0,     orders:0,   conv:0,  chats:0,  active:false, industry:"Agriculture", created:"2026-01-14" },
+  { id:"s7", name:"SportPro Nigeria",   owner:"chidi@sportpro.ng",  plan:"pro",        revenue:7640,  orders:88,  conv:76, chats:31, active:true,  industry:"Sports",      created:"2026-01-05" },
+  { id:"s8", name:"Luxe Paris",         owner:"marc@luxe.fr",       plan:"enterprise", revenue:88200, orders:724, conv:95, chats:180,active:true,  industry:"Luxury",      created:"2025-11-01" },
+];
+
+let filteredStores = [...MOCK_STORES];
+
+const PLATFORM_EVENTS = [
+  { type:"store", icon:"store", color:"var(--neon-g)", msg:"New store registered: <strong>BioFarm Morocco</strong>", time:"5m ago" },
+  { type:"alert", icon:"alert-triangle", color:"#fbbf24", msg:"API Key #2 rate-limited — auto-rotated to Key #3", time:"12m ago" },
+  { type:"revenue", icon:"trending-up", color:"var(--neon-b)", msg:"Platform milestone: <strong>$48M</strong> total revenue reached", time:"1h ago" },
+  { type:"store", icon:"user-plus", color:"var(--neon-g)", msg:"Luxe Paris upgraded to Enterprise plan", time:"2h ago" },
+  { type:"system", icon:"cpu", color:"#a78bfa", msg:"Database auto-backup completed successfully (12.4 GB)", time:"3h ago" },
+  { type:"alert", icon:"shield-check", color:"var(--neon-g)", msg:"All 3 Groq API keys health check passed", time:"4h ago" },
+  { type:"revenue", icon:"package-check", color:"var(--neon-b)", msg:"Global orders crossed <strong>10,000</strong> milestone", time:"6h ago" },
+];
+
+// ── Init ─────────────────────────────────────────
+document.addEventListener("DOMContentLoaded", () => {
+  refreshAll();
+  initPlatformCharts();
+  renderKeyMonitor();
+  renderEventLog();
+  renderStores();
+
+  // Live counter simulation
+  setInterval(() => {
+    const el = document.getElementById("p-chats");
+    if(el) el.textContent = (Math.floor(Math.random()*50)+300);
+  }, 6000);
+});
+
+function refreshAll() {
+  document.getElementById("p-stores").textContent = "12,400";
+  document.getElementById("p-stores-sub").textContent = "+47 this week";
+  document.getElementById("p-revenue").textContent = "$48.2M";
+  document.getElementById("p-orders").textContent = "2.1M";
+  document.getElementById("p-api-health").textContent = "99.9%";
+  document.getElementById("p-api-health").style.color = "var(--neon-g)";
+  document.getElementById("p-api-sub").textContent = "All keys healthy";
+  document.getElementById("p-chats").textContent = "312";
+  document.getElementById("p-tokens").textContent = "847M";
+  document.getElementById("storesRefreshed").textContent = new Date().toLocaleTimeString();
+}
+
+function initPlatformCharts() {
+  // Revenue line
+  const rCtx = document.getElementById("platformRevenueChart").getContext("2d");
+  const labels = [], data1 = [], data2 = [];
+  for(let i=29; i>=0; i--) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    labels.push(i%5===0 ? d.toLocaleDateString("en-US",{month:"short",day:"numeric"}) : "");
+    data1.push(Math.floor(Math.random()*80000+40000));
+    data2.push(Math.floor(Math.random()*40000+20000));
+  }
+  new Chart(rCtx, {
+    type:"line",
+    data:{
+      labels,
+      datasets:[
+        { label:"Revenue", data:data1, borderColor:"#00ff88", backgroundColor:"rgba(0,255,136,0.04)", borderWidth:2, fill:true, tension:0.4, pointRadius:0 },
+        { label:"Orders Value", data:data2, borderColor:"#00d4ff", backgroundColor:"rgba(0,212,255,0.03)", borderWidth:1.5, fill:true, tension:0.4, pointRadius:0 },
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:true, labels:{color:"#7a9bb5", boxWidth:10, font:{family:"IBM Plex Mono",size:10}}}},
+      scales:{
+        x:{grid:{color:"rgba(0,212,255,0.04)"},ticks:{color:"#7a9bb5",font:{family:"IBM Plex Mono",size:9}}},
+        y:{grid:{color:"rgba(0,212,255,0.04)"},ticks:{color:"#7a9bb5",font:{family:"IBM Plex Mono",size:9},callback:v=>"$"+(v/1000).toFixed(0)+"k"}}
+      }
+    }
+  });
+
+  // Plan distribution
+  const pCtx = document.getElementById("planChart").getContext("2d");
+  new Chart(pCtx, {
+    type:"doughnut",
+    data:{
+      labels:["Free","Pro","Enterprise"],
+      datasets:[{data:[8200,3800,400],backgroundColor:["#3d5a73","#00d4ff","#00ff88"],borderWidth:0,hoverOffset:4}]
+    },
+    options:{cutout:"72%", plugins:{legend:{display:false}}, responsive:true, maintainAspectRatio:false}
+  });
+
+  document.getElementById("planLegend").innerHTML = [
+    {label:"Free",color:"#3d5a73",val:"8,200"},
+    {label:"Pro",color:"#00d4ff",val:"3,800"},
+    {label:"Enterprise",color:"#00ff88",val:"400"},
+  ].map(p => `
+    <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="width:8px;height:8px;border-radius:50%;background:${p.color};display:inline-block;"></span>
+        <span style="color:var(--text-2);">${p.label}</span>
+      </div>
+      <strong style="color:var(--text-1);font-family:'IBM Plex Mono',monospace;">${p.val}</strong>
+    </div>`).join("");
+
+  // Latency
+  const lCtx = document.getElementById("latencyChart").getContext("2d");
+  const latencies = Array.from({length:48}, () => Math.floor(Math.random()*300+80));
+  const avg = Math.floor(latencies.reduce((a,b)=>a+b)/latencies.length);
+  document.getElementById("avgLatency").textContent = `Avg: ${avg} ms`;
+  new Chart(lCtx, {
+    type:"bar",
+    data:{
+      labels:Array.from({length:48},(_,i)=>i%6===0?`${i/2}h`:""),
+      datasets:[{data:latencies,backgroundColor:latencies.map(v=>v>300?"rgba(239,68,68,0.6)":v>200?"rgba(251,191,36,0.5)":"rgba(0,212,255,0.4)"),borderRadius:2,borderWidth:0}]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{display:false},ticks:{color:"#3d5a73",font:{size:9}}},
+        y:{grid:{color:"rgba(0,212,255,0.04)"},ticks:{color:"#7a9bb5",font:{size:9,family:"IBM Plex Mono"},callback:v=>v+"ms"}}
+      }
+    }
+  });
+}
+
+function renderKeyMonitor() {
+  const status = SalesBotConfig.getKeyStatus();
+  document.getElementById("keyMonitor").innerHTML = status.map((k,i) => `
+    <div style="background:var(--bg-1);border:1px solid ${k.healthy?'rgba(0,255,136,0.2)':'rgba(239,68,68,0.2)'};border-radius:10px;padding:14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="width:8px;height:8px;border-radius:50%;background:${k.healthy?'var(--neon-g)':'#ef4444'};display:inline-block;animation:${k.healthy?'pulse 1.5s infinite':'none'};"></span>
+          <span class="mono" style="font-size:12px;font-weight:600;">Key #${k.index+1}</span>
+        </div>
+        <span class="badge ${k.healthy?'badge-green':'badge-red'}">${k.healthy?'● Healthy':'✕ Cooldown'}</span>
+      </div>
+      <div class="mono" style="font-size:11px;color:var(--text-3);margin-bottom:6px;">${k.preview}</div>
+      ${!k.healthy ? `<div style="font-size:11px;color:#fbbf24;font-family:'IBM Plex Mono',monospace;">Retry in ${k.cooldownRemaining}s</div>` : `<div style="font-size:11px;color:var(--text-3);">Ready to serve requests</div>`}
+      <div class="progress" style="margin-top:8px;"><div class="progress-fill" style="width:${k.healthy?Math.floor(Math.random()*40+60):15}%;background:${k.healthy?'linear-gradient(90deg,var(--neon-b),var(--neon-g))':'#ef4444'};"></div></div>
+      <div style="font-size:10px;color:var(--text-3);margin-top:4px;font-family:'IBM Plex Mono',monospace;">Load: ${k.healthy?Math.floor(Math.random()*40+60):15}%</div>
+    </div>
+  `).join("");
+}
+
+function refreshKeyStatus() {
+  renderKeyMonitor();
+  showToast("Key status refreshed", "blue");
+}
+
+function renderStores() {
+  const planColors = { free:"badge-amber", pro:"badge-blue", enterprise:"badge-green" };
+  document.getElementById("storesBody").innerHTML = filteredStores.map(s => `
+    <tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:32px;height:32px;border-radius:8px;background:var(--bg-3);display:flex;align-items:center;justify-content:center;font-size:12px;border:1px solid var(--border);flex-shrink:0;">${s.name[0]}</div>
+          <div>
+            <div style="font-weight:600;font-size:13px;">${s.name}</div>
+            <div style="font-size:11px;color:var(--text-3);">${s.industry}</div>
+          </div>
+        </div>
+      </td>
+      <td style="font-size:12px;color:var(--text-2);">${s.owner}</td>
+      <td><span class="badge ${planColors[s.plan]||'badge-amber'}">${s.plan.toUpperCase()}</span></td>
+      <td><span class="mono" style="color:var(--neon-g);font-size:13px;">$${s.revenue.toLocaleString()}</span></td>
+      <td><span class="mono" style="font-size:13px;">${s.orders.toLocaleString()}</span></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div class="progress" style="width:60px;">
+            <div class="progress-fill" style="width:${s.conv}%;background:${s.conv>80?'var(--neon-g)':s.conv>50?'#fbbf24':'#ef4444'};"></div>
+          </div>
+          <span class="mono" style="font-size:11px;color:${s.conv>80?'var(--neon-g)':s.conv>50?'#fbbf24':'#ef4444'}">${s.conv}%</span>
+        </div>
+      </td>
+      <td><span class="mono" style="font-size:13px;">${s.chats}</span></td>
+      <td><span class="badge ${s.active?'badge-green':'badge-red'}">${s.active?'● Active':'✕ Inactive'}</span></td>
+      <td>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-outline" style="padding:5px 10px;font-size:11px;" onclick="viewStore('${s.id}')"><i data-lucide="eye" style="width:12px;height:12px;"></i></button>
+          <button class="btn btn-outline" style="padding:5px 10px;font-size:11px;${s.active?'':'color:#ef4444;border-color:rgba(239,68,68,0.2);'}" onclick="toggleStore('${s.id}')">${s.active?'<i data-lucide="pause" style="width:12px;height:12px;"></i>':'<i data-lucide="play" style="width:12px;height:12px;"></i>'}</button>
+        </div>
+      </td>
+    </tr>
+  `).join("");
+  document.getElementById("storesCount").textContent = `${filteredStores.length} / ${MOCK_STORES.length} stores`;
+  lucide.createIcons();
+}
+
+function filterStores() {
+  const q = document.getElementById("storeSearch").value.toLowerCase();
+  const p = document.getElementById("planFilter").value;
+  filteredStores = MOCK_STORES.filter(s =>
+    (!q || s.name.toLowerCase().includes(q) || s.owner.toLowerCase().includes(q)) &&
+    (!p || s.plan === p)
+  );
+  renderStores();
+}
+
+function viewStore(id) { window.open("dashboard.html", "_blank"); }
+
+function toggleStore(id) {
+  const s = MOCK_STORES.find(x => x.id === id);
+  if(s) { s.active = !s.active; filteredStores = [...MOCK_STORES]; renderStores(); showToast(`Store ${s.active?"activated":"deactivated"}`, s.active?"green":"red"); }
+}
+
+function renderEventLog() {
+  document.getElementById("eventLog").innerHTML = PLATFORM_EVENTS.map(e => `
+    <div style="display:flex;align-items:flex-start;gap:10px;padding:10px;border-radius:8px;background:var(--bg-1);border:1px solid rgba(0,212,255,0.06);">
+      <div style="background:${e.color}18;border-radius:7px;padding:7px;flex-shrink:0;">
+        <i data-lucide="${e.icon}" style="width:13px;height:13px;color:${e.color};"></i>
+      </div>
+      <div style="flex:1;">
+        <div style="font-size:12px;line-height:1.5;">${e.msg}</div>
+        <div class="mono" style="font-size:10px;color:var(--text-3);margin-top:2px;">${e.time}</div>
+      </div>
+    </div>
+  `).join("");
+  lucide.createIcons();
+}
+
+function exportReport() {
+  showToast("Generating platform report…", "blue");
+  setTimeout(() => showToast("Report downloaded ✓", "green"), 1500);
+}
+
+function showToast(msg, type="green") {
+  const colors = {green:"var(--neon-g)", blue:"var(--neon-b)", red:"#ef4444"};
+  const t = document.createElement("div");
+  t.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:9999;background:var(--bg-2);border:1px solid ${colors[type]};border-radius:10px;padding:12px 20px;font-size:13px;font-weight:600;color:${colors[type]};box-shadow:0 8px 32px rgba(0,0,0,0.4);font-family:'Syne',sans-serif;display:flex;align-items:center;gap:8px;`;
+  t.innerHTML = `<i data-lucide="check-circle-2" style="width:16px;height:16px;"></i> ${msg}`;
+  document.body.appendChild(t); lucide.createIcons();
+  setTimeout(() => t.remove(), 3000);
+}
+</script>
+</body>
+</html>
